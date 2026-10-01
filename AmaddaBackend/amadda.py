@@ -19,8 +19,8 @@ class Amadda:
 
 import asyncio
 def get_amadda():
-    firebase_service_account_key_json = "AmaddaBackend/amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"
-    firebase_app_api_key = "AIzaSyArEx7ET5pbc5645xKKaCz6MNAuvVxHjGs"
+    firebase_service_account_key_json = "AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json"
+    firebase_app_api_key = "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds"
 
     # firebase와의 직접적인 통신을 수행하는 객체
     firebase = Firebase(firebase_service_account_key_json=firebase_service_account_key_json)

@@ -437,8 +437,11 @@ class FirebaseChacher:
 
 import asyncio
 
+def get_firebase_chacher():
+    return FirebaseChacher(Firebase("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json"))
+
 async def Test_user_create():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.create_user(
         {
@@ -450,7 +453,7 @@ async def Test_user_create():
     print(fc.PRINT_ELEMS("User"))
 
 async def Test_subject_create():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.create_subject(
         {
@@ -483,7 +486,7 @@ async def Test_subject_create():
     print(fc.PRINT_ELEMS("Subject"))
 
 async def Test_X_create():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     X_name = "Summary"
 
@@ -523,8 +526,7 @@ async def Test_X_create():
     print(X_name, "=", fc.PRINT_ELEMS(X_name))
 
 async def Test_init_user():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
-
+    fc = get_firebase_chacher()
 
     print("user1 init : ", await fc.init_user("user-1"))
     print("user1 init : ", await fc.init_user("user-1"))
@@ -533,7 +535,7 @@ async def Test_init_user():
     print(fc.PRINT_ELEMS("User"))
 
 async def Test_init_subject():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     print("user1 subject init : ", await fc.init_subjects("user-1"))
     print("user1 subject init : ", await fc.init_subjects("user-1"))
@@ -542,7 +544,7 @@ async def Test_init_subject():
     print(fc.PRINT_ELEMS("Subject"))
 
 async def Test_init_X():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     X_name = "Summary"
 
@@ -552,7 +554,7 @@ async def Test_init_X():
     print(fc.PRINT_ELEMS("Summary"))
 
 async def Test_get_user_data():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_user("user-1")
     print("user-1 seek : ", fc.get_user("user-1"))
@@ -563,7 +565,7 @@ async def Test_get_user_data():
     print("all : ", fc.PRINT_ELEMS("ALL"))
 
 async def Test_get_subject_data():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_Xs("Summary", "user-1", "subject-1")
     print("user-1 subject-1 seek : ", fc.get_subject("user-1", "subject-1"))
@@ -575,7 +577,7 @@ async def Test_get_subject_data():
     print("all : ", fc.PRINT_ELEMS("ALL"))
 
 async def Test_get_subjects_data():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_subjects("user-1")
     print("user-1 subjects seek : ", fc.get_subjects("user-1"))
@@ -586,7 +588,7 @@ async def Test_get_subjects_data():
     print("all : ", fc.PRINT_ELEMS("ALL"))
 
 async def Test_get_X_data():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_Xs("Summary", "user-1", "subject-1")
     print(
@@ -607,7 +609,7 @@ async def Test_get_X_data():
     print("all : ", fc.PRINT_ELEMS("ALL"))
 
 async def Test_get_Xs_data():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_Xs("Summary", "user-1", "subject-1")
     print(
@@ -621,7 +623,7 @@ async def Test_get_Xs_data():
     print("all : ", fc.PRINT_ELEMS("ALL"))
 
 async def Test_user_to_firebase():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_user("user-1")
     user_data = fc.get_user("user-1")
@@ -632,7 +634,7 @@ async def Test_user_to_firebase():
     print(fc.PRINT_ELEMS("User"))
 
 async def Test_subject_to_firebase():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_subjects("user-1")
     subject_datas = fc.get_subjects("user-1")
@@ -644,7 +646,7 @@ async def Test_subject_to_firebase():
     print(fc.PRINT_ELEMS("Subject"))
 
 async def Test_X_to_firebase():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_Xs("Summary", "user-1", "subject-1")
     X_datas = fc.get_Xs("Summary", "user-1", "subject-1")
@@ -656,7 +658,7 @@ async def Test_X_to_firebase():
     print(fc.PRINT_ELEMS("Summary"))
 
 async def Test_delete_user():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_user("user-1")
     print(fc.PRINT_ELEMS("ALL"))
@@ -664,7 +666,7 @@ async def Test_delete_user():
     print(fc.PRINT_ELEMS("ALL"))
 
 async def Test_delete_subject():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_subjects("user-1")
     print(fc.PRINT_ELEMS("ALL"))
@@ -672,7 +674,7 @@ async def Test_delete_subject():
     print(fc.PRINT_ELEMS("ALL"))
 
 async def Test_delete_subjects():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
     
     await fc.init_subjects("user-1")
     print(fc.PRINT_ELEMS("ALL"))
@@ -680,7 +682,7 @@ async def Test_delete_subjects():
     print(fc.PRINT_ELEMS("ALL"))
 
 async def Test_delete_X():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
 
     await fc.init_Xs("Summary", "user-1", "subject-2")
     print(fc.PRINT_ELEMS("ALL"))
@@ -688,7 +690,7 @@ async def Test_delete_X():
     print(fc.PRINT_ELEMS("ALL"))
 
 async def Test_delete_Xs():
-    fc = FirebaseChacher(Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json"))
+    fc = get_firebase_chacher()
     
     await fc.init_Xs("Summary", "user-1", "subject-1")
     print(fc.PRINT_ELEMS("ALL"))
@@ -697,5 +699,5 @@ async def Test_delete_Xs():
 
 # delete와 to_firebase(save)마저 완성하기
 if __name__ == "__main__":
-    asyncio.run(Test_delete_Xs())
+    asyncio.run(Test_init_user())
 
