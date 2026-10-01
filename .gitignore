@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Firebase Admin SDK Secret Key
+amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json
