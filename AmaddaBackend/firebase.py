@@ -118,8 +118,11 @@ class Firebase:
 
 import asyncio
 
+def get_figrebase():
+    return Firebase("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json")
+
 async def test():
-    firebase = Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json")
+    firebase = get_figrebase()
 
     await firebase.create("Subject-test", {
         "ownerUserId":"user-1",
@@ -153,7 +156,7 @@ async def test():
     await firebase.delete("Subject-test", user1_subjects[1]["document_id"])
 
 async def Test_delete():
-    firebase = Firebase("amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json")
+    firebase = get_figrebase()
 
     await firebase.delete("User", "K9eQ8tkQEvG31KKUV0Mc")
 
