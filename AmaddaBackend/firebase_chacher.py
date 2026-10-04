@@ -1,4 +1,4 @@
-from firebase import Firebase
+from my_firebase import Firebase
 
 # 모든 정보의 내부에는 아래와 같은 특수 요소가 있다
 # document_id -> firebase에서 문서를 가져왔을때 함께 포함되는 정보로
@@ -6,7 +6,6 @@ from firebase import Firebase
 # pending_sync -> firebase에서 가져와 캐싱한 정보들중, 변경이 일어난 정보에 추가되는 요소로
 #   추후 다시 firebase에 저장할때는 해당 요소가 있는 정보들에 대해서만, 해당 요소를 pop한뒤
 #   firebase에 덮어쓴다
-
 
 class FirebaseChacher:
     ALL_X_ELEMS = [

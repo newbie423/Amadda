@@ -37,7 +37,7 @@ class FirebaseSignUpAndLogin:
 
         return user.uid
 
-    async def login(self, email: str, password: str) -> str | None:
+    async def login(self, email: str, password: str) -> str:
         """
         Firebase Authentication 로그인
 
@@ -88,26 +88,31 @@ class FirebaseSignUpAndLogin:
 
 # Test Code
 
+def get_firebase_signup_and_login():
+    return FirebaseSignUpAndLogin("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json",
+                                  "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds")
+
 async def Test_signup():
-    fsl = FirebaseSignUpAndLogin(firebase_service_account_key_json="amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json",
-                                 firebase_app_api_key="AIzaSyArEx7ET5pbc5645xKKaCz6MNAuvVxHjGs")
-    print("first signup :", await fsl.signup("a@example.com", "123456"))
-    print("second signup :", await fsl.signup("a@example.com", "123456"))
+    fsal = get_firebase_signup_and_login()
+
+    print("first signup :", await fsal.signup("a@example.com", "123456"))
+    print("second signup :"); await fsal.signup("a@example.com", "123456")
 
 async def Test_login():
-    fsl = FirebaseSignUpAndLogin(firebase_service_account_key_json="amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json",
-                                 firebase_app_api_key="AIzaSyArEx7ET5pbc5645xKKaCz6MNAuvVxHjGs")
-    print("login with correct password :", await fsl.login("a@example.com", "123456"))
-    print("login with incorrect password :"); await fsl.login("a@example.com", "12345")
+    fsal = get_firebase_signup_and_login()
+
+    print("login with correct password :", await fsal.login("a@example.com", "123456"))
+    print("login with incorrect password :"); await fsal.login("a@example.com", "12345")
 
 async def Test_delete():
-    fsl = FirebaseSignUpAndLogin(firebase_service_account_key_json="amadda-68958-firebase-adminsdk-fbsvc-95a163b81f.json",
-                                     firebase_app_api_key="AIzaSyArEx7ET5pbc5645xKKaCz6MNAuvVxHjGs")
+    fsal = get_firebase_signup_and_login()
 
-    uid = await fsl.login("a@example.com", "123456")
-    print("exist uid delete :"); await fsl.delete(uid)
-    print("not exist uid delete :"); await fsl.delete("awlkjdaslfkjalskdjlfkalksdf") # 존재하지 않는 uid 삭제
+    uid = await fsal.login("a@example.com", "123456")
+    print("exist uid deleted"); await fsal.delete(uid)
+    print("not exist uid deleted"); await fsal.delete("awlkjdaslfkjalskdjlfkalksdf") # 존재하지 않는 uid 삭제
 
 if(__name__ == "__main__"):
-    asyncio.run(Test_signup())
+    asyncio.run(Test_delete())
+
+
 
