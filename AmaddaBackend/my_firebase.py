@@ -24,7 +24,7 @@ class Firebase:
 
         if "document_id" in data:
             raise ValueError(
-                "data is considered to be after load from firebase, " "use save method"
+                "data is considered to be after load from firebase, use save method"
             )
 
         await self.db.collection(collection).add(data)
@@ -80,9 +80,9 @@ class Firebase:
 
         return result
 
-    # 전달된 collection속 해당되는 document_id를 가진 문서를 삭제합니다.
+    '''# 전달된 collection속 해당되는 document_id를 가진 문서를 삭제합니다.
     async def delete_with_document_id(self, collection: str, document_id: str):
-        await self.db.collection(collection).document(document_id).delete()
+        await self.db.collection(collection).document(document_id).delete()'''
 
     # 전달된 collection의 delete_filter를 만족하는 모든 문서를 삭제합니다
     async def delete_with_filter(

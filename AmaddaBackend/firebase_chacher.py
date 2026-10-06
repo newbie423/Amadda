@@ -1,5 +1,3 @@
-from typing import Any
-
 from my_firebase import Firebase
 
 # 모든 정보의 내부에는 아래와 같은 특수 요소가 있다
@@ -11,15 +9,15 @@ from my_firebase import Firebase
 
 class FirebaseChacher:
     __ALL_X_ELEMS = [
-        "WikiDocument"
+        "Wiki_Document",
         "Problem",
-        "UserAnswer",
+        "User_Answer",
         "Grade",
     ]
 
     __ALL_ELEMS = [
         "User",
-        "Subject"
+        "Subject",
     ] + __ALL_X_ELEMS
 
     def __init__(self, firebase:Firebase):
@@ -297,77 +295,82 @@ class FirebaseChacher:
     # ===== 캐싱된 정보를 삭제하고, 추가로 삭제된 캐싱 정보에 해당하는 firebase에 있는 문서도 선택적으로 삭제하는 메소드
 
     # elem.User의 user_id에 해당하는 캐싱된 user 정보를 삭제하고, 추가로 삭제된 user 정보에 해당하는 firebase의 User 컬렉션속 문서도 선택적으로 삭제하는 메소드
-    async def delete_user(self, user_id: str, firebase_delete: bool = False)->dict[str, Any]:
+    async def delete_user(self, user_id: str, firebase_delete: bool = False):
         # self.get_user(pop=True)를 사용하여 user_id에 해당하는 캐싱된 user 정보를 pop한뒤 가져온다
-        delete_user = self.get_user(user_id, True)
+        if(user_id in self.__elems["User"]):
+            self.get_user(user_id, True)
         
         # - firebase_delete가 False인 경우, 그대로 종료한다
         if(firebase_delete == False):
             return
         
         # firebase_delete가 True라는 뜻이기에, pop해온 user 정보의 document_id와 Firebase모듈을 사용하여 firebase에서 문서를 delete 한다
-        await self.__firebase.delete_with_document_id("User", delete_user["document_id"])
-
-        return delete_user
+        await self.__firebase.delete_with_filter("User", {"user_id":user_id})
 
     # elem.Subject의 user_id - subject_id에 해당하는 캐싱된 subject 정보를 삭제하고, 추가로 삭제된 subject 정보에 해당하는 firebase의 User 컬렉션속 문서도 선택적으로 삭제하는 메소드
-    async def delete_subject(self, user_id: str, subject_id: str, firebase_delete: bool = False)->dict[str, Any]:
+    async def delete_subject(self, owner_user_id: str, subject_id: str, firebase_delete: bool = False):
         # self.get_subject(pop=True)를 사용하여 user_id - subject_id에 해당하는 캐싱된 subject 정보를 pop한뒤 가져온다
-        delete_subject = self.get_subject(user_id, subject_id, True)
+        if(owner_user_id in self.__elems["Subject"]):
+            self.get_subject(owner_user_id, subject_id, True)
         
         # - firebase_delete가 False인 경우, 그대로 종료한다
         if(firebase_delete == False):
             return
         
         # firebase_delete가 True라는 뜻이기에, pop해온 subject 정보의 document_id와 Firebase모듈을 사용하여 firebase에서 문서를 delete 한다
-        await self.__firebase.delete_with_document_id("Subject", delete_subject["document_id"])
-
-        return delete_subject
+        await self.__firebase.delete_with_filter("Subject", {
+            "owner_user_id":owner_user_id,
+            "subject_id":subject_id
+        })
 
     # elem.Subject의 user_id에 해당하는 캐싱된 모든 subject 정보를 삭제하고, 추가로 삭제된 모든 subject 정보에 해당하는 firebase의 Subject 컬렉션속 문서들도 선택적으로 삭제하는 메소드
-    async def delete_subjects(self, user_id: str, firebase_delete: bool = False):
+    async def delete_subjects(self, owner_user_id: str, firebase_delete: bool = False):
         # self.get_subjects(pop=True)를 사용하여 user_id에 해당하는 캐싱된 모든 subject 정보들을 pop한뒤 가져온다
-        delete_subjects = self.get_subjects(user_id, True)
-        
+        if(owner_user_id in self.__elems["Subject"]):
+            self.get_subjects(owner_user_id, True)
+
         # - firebase_delete가 False인 경우, 그대로 종료한다
         if(firebase_delete == False):
             return
         
         # firebase_delete가 True라는 뜻이기에, pop해온 모든 subject 정보들의 document_id와 Firebase모듈을 사용하여 firebase에서 문서들을 delete 한다
-        for delete_subject in delete_subjects:
-            await self.__firebase.delete_with_document_id("Subject", delete_subject["document_id"])
-
-        return delete_subjects
-
+        await self.__firebase.delete_with_filter("Subject", {
+            "owner_user_id":owner_user_id
+        })
+        
     # elem.X의 (user_id, subject_id) - X_id에 해당하는 캐싱된 X 정보를 삭제하고, 추가로 삭제된 X 정보에 해당하는 firebase의 X 컬렉션속 문서도 선택적으로 삭제하는 메소드
-    async def delete_X(self, X_name: str, user_id: str, subject_id: str, X_id: str, firebase_delete: bool = False):
+    async def delete_X(self, X_name: str, owner_user_id: str, owner_subject_id: str, X_id: str, firebase_delete: bool = False):
         # X_name과 self.get_X(pop=True)를 사용하여 (user_id, subject_id) - X_id에 해당하는 캐싱된 X 정보를 pop한뒤 가져온다
-        delete_X = self.get_X(X_name, user_id, subject_id, X_id, True)
+        if((owner_user_id, owner_subject_id) in self.__elems[X_name]):
+            self.get_X(X_name, owner_user_id, owner_subject_id, X_id, True)
         
         # - firebase_delete가 False인 경우, 그대로 종료한다
         if(firebase_delete == False):
             return
         
         # firebase_delete가 True라는 뜻이기에, pop해온 X 정보의 document_id와 Firebase모듈을 사용하여 firebase에서 문서를 delete 한다
-        await self.__firebase.delete_with_document_id(X_name, delete_X["document_id"])
-
-        return delete_X
-
+        await self.__firebase.delete_with_filter(X_name, {
+            "owner_user_id":owner_user_id,
+            "owner_subject_id":owner_subject_id,
+            f"{X_name.lower()}_id":X_id
+        })
+        
     # elem.X의 (user_id, subject_id)에 해당하는 캐싱된 모든 X 정보를 삭제하고, 추가로 삭제된 모든 X 정보에 해당하는 firebase의 X 컬렉션속 문서들도 선택적으로 삭제하는 메소드
-    async def delete_Xs(self, X_name: str, user_id: str, subject_id: str, firebase_delete: bool = False):
+    async def delete_Xs(self, X_name: str, owner_user_id: str, owner_subject_id: str, firebase_delete: bool = False):
         # X_name과 self.get_Xs(pop=True)를 사용하여 (user_id, subject_id)에 해당하는 캐싱된 모든 X 정보를 pop한뒤 가져온다
-        delete_Xs = self.get_Xs(X_name, user_id, subject_id, True)
+        if((owner_user_id, owner_subject_id) in self.__elems[X_name]):
+            self.get_Xs(X_name, owner_user_id, owner_subject_id, True)
         
         # - firebase_delete가 False인 경우, 그대로 종료한다
         if(firebase_delete == False):
             return
         
         # firebase_delete가 True라는 뜻이기에, pop해온 모든 X 정보들의 document_id와 Firebase모듈을 사용하여 firebase에서 문서들을 delete 한다
-        for delete_X in delete_Xs:
-            await self.__firebase.delete_with_document_id(X_name, delete_X["document_id"])
-
-        return delete_X
-
+        await self.__firebase.delete_with_filter(X_name, {
+            "owner_user_id":owner_user_id,
+            "owner_subject_id":owner_subject_id
+        })
+        
     # ===== 프로그램 내부에서 새롭게 생성된 정보를 firebase에 생성한뒤, 그대로 다시 가져와(document_id를 얻기 위함) 추가 캐싱을 수행하는 메소드
 
     # 프로그램 내부에서 새롭게 생성된 user 정보를 firebase에 생성한뒤, 그대로 다시 가져와 elem.User에 추가 캐싱을 수행하는 메소드
@@ -502,26 +505,26 @@ async def Test_subject_create():
 async def Test_X_create():
     fc = get_firebase_chacher()
 
-    X_name = "Summary"
+    X_name = "Wiki_Document"
 
     x_id = f"{X_name.lower()}_id"
 
     await fc.create_X(
         X_name,
-        {"owner_user_id": "user-1", "owner_subject_id": "subject-1", x_id: "summary-1"},
+        {"owner_user_id": "user-100", "owner_subject_id": "subject-1", x_id: "wiki_document-1"},
     )
 
     await fc.create_X(
         X_name,
-        {"owner_user_id": "user-1", "owner_subject_id": "subject-1", x_id: "summary-2"},
+        {"owner_user_id": "user-100", "owner_subject_id": "subject-1", x_id: "wiki_document-2"},
     )
 
     await fc.create_X(
             X_name,
-            {"owner_user_id": "user-1", "owner_subject_id": "subject-2", x_id: "summary-1"},
+            {"owner_user_id": "user-100", "owner_subject_id": "subject-2", x_id: "wiki_document-1"},
         )
 
-    print(X_name, "=", fc.PRINT_ELEMS(X_name))
+    print(fc.PRINT_ELEMS(X_name))
 
     X_name = "Problem"
 
@@ -529,12 +532,12 @@ async def Test_X_create():
 
     await fc.create_X(
         X_name,
-        {"owner_user_id": "user-1", "owner_subject_id": "subject-1", x_id: "problem-1"},
+        {"owner_user_id": "user-100", "owner_subject_id": "subject-1", x_id: "problem-1"},
     )
 
     await fc.create_X(
         X_name,
-        {"owner_user_id": "user-1", "owner_subject_id": "subject-1", x_id: "problem-2"},
+        {"owner_user_id": "user-100", "owner_subject_id": "subject-1", x_id: "problem-2"},
     )
 
     print(X_name, "=", fc.PRINT_ELEMS(X_name))
@@ -674,7 +677,7 @@ async def Test_X_to_firebase():
 async def Test_delete_user():
     fc = get_firebase_chacher()
 
-    await fc.init_user("user-1")
+    #await fc.init_user("user-1")
     print(fc.PRINT_ELEMS("ALL"))
     await fc.delete_user("user-1", True)
     print(fc.PRINT_ELEMS("ALL"))
@@ -682,15 +685,15 @@ async def Test_delete_user():
 async def Test_delete_subject():
     fc = get_firebase_chacher()
 
-    await fc.init_subjects("user-1")
+    #await fc.init_subjects("user-1")
     print(fc.PRINT_ELEMS("ALL"))
-    await fc.delete_subject("user-1", "subject-1", True)
+    await fc.delete_subject("user-1", "subject-2", True)
     print(fc.PRINT_ELEMS("ALL"))
 
 async def Test_delete_subjects():
     fc = get_firebase_chacher()
     
-    await fc.init_subjects("user-1")
+    #await fc.init_subjects("user-1")
     print(fc.PRINT_ELEMS("ALL"))
     await fc.delete_subjects("user-1", True)
     print(fc.PRINT_ELEMS("ALL"))
@@ -698,19 +701,19 @@ async def Test_delete_subjects():
 async def Test_delete_X():
     fc = get_firebase_chacher()
 
-    await fc.init_Xs("Summary", "user-1", "subject-2")
+    #await fc.init_Xs("Wiki_Document", "user-100", "subject-1")
     print(fc.PRINT_ELEMS("ALL"))
-    await fc.delete_X("Summary", "user-1", "subject-2", "summary-1", True)
+    await fc.delete_X("Wiki_Document", "user-100", "subject-2", "wiki_document-1", True)
     print(fc.PRINT_ELEMS("ALL"))
 
 async def Test_delete_Xs():
     fc = get_firebase_chacher()
-    
-    await fc.init_Xs("Summary", "user-1", "subject-1")
+
+    #await fc.init_Xs("Wiki_Document", "user-100", "subject-1")
     print(fc.PRINT_ELEMS("ALL"))
-    await fc.delete_Xs("Summary", "user-1", "subject-1", True)
+    await fc.delete_Xs("Wiki_Document", "user-100", "subject-1", True)
     print(fc.PRINT_ELEMS("ALL"))
 
 if __name__ == "__main__":
-    asyncio.run(Test_init_user())
+    asyncio.run(Test_delete_Xs())
 
