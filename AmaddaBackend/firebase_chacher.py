@@ -53,6 +53,9 @@ class FirebaseChacher:
         }
         """
 
+    def get_all_x_elem_list(self):
+        return FirebaseChacher.__ALL_X_ELEMS
+
     # X_name이 ALL_X_ELEMS에 포함되어 있는지 확인하는 내장 메소드
     def __is_X_name_contains(self, X_name):
         if X_name not in FirebaseChacher.__ALL_X_ELEMS:

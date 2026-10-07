@@ -460,8 +460,18 @@ class AmaddaElementManager:
 
     # 임이의 사용자에 대한 캐싱된 모든 데이터를 삭제하는 메소드(로그 아웃 수행시)
     async def delete_user_all_chache_data(self, user_id:str):
-        #<여기 부터 마저 이어서 작성하기>
-        pass
+        user = await self.get_user(user_id)
+        
+        all_x_elem_list = self.__firebase_chacher.get_all_x_elem_list()
+        
+        await self.__firebase_chacher.delete_user(user_id)
+        await self.__firebase_chacher.delete_subjects(user_id)
+
+        owned_subject_ids = user["owned_subject_ids"]
+        
+        for x_elem in all_x_elem_list:
+            for subject_id in owned_subject_ids:
+                await self.__firebase_chacher.delete_Xs(x_elem, user_id, subject_id)
 
     # 임이의 사용자에 대한 모든 캐셔 및 firebase에서 삭제하는 메소드(회원 탈퇴시)
     async def delete_user(self, user_id:str):
@@ -692,6 +702,27 @@ async def Test_user_delete():
 
 async def Test_delete_user_all_chache_data():
     aem = get_amadda_element_manager()
+    '''
+    await aem.create_user("user-1", "kevin")
+    await aem.create_user("user-2", "alice")
+
+    await aem.create_subject("user-1", "subject-1", subject_name="python")
+    await aem.create_subject("user-1", "subject-2", subject_name="electronics")
+
+    await aem.create_wiki_document("user-1", "subject-1", "variable")
+    await aem.create_wiki_document("user-1", "subject-1", "function")
+
+    await aem.create_problem("user-1", "subject-1", "variable", "problem-1", "user_answer-1", "grade-1")
+    '''
+    '''
+    await aem.get_user("user-1")
+    await aem.get_user("user-2")
+    await aem.get_wiki_documents("user-1", "subject-1")
+    '''
+    #print(aem.TEST_GET_CHACHE("ALL"))
+    #await aem.delete_user_all_chache_data("user-1")
+    #print(aem.TEST_GET_CHACHE("ALL"))
+
 
 if(__name__ == "__main__"):
     asyncio.run(Test_delete_user_all_chache_data())
