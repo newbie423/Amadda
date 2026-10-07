@@ -3,9 +3,6 @@ from typing import Any
 import httpx
 from firebase_admin import auth
 
-from my_firebase import Firebase
-from firebase_chacher import FirebaseChacher
-from amadda_element_manager import AmaddaElementManager
 from utils import get_or_initialize_firebase_app
 
 class FirebaseSignUpAndLogin:
