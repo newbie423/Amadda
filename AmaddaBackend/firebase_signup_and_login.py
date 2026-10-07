@@ -3,23 +3,18 @@ from typing import Any
 import httpx
 from firebase_admin import auth
 
+from my_firebase import Firebase
+from firebase_chacher import FirebaseChacher
+from amadda_element_manager import AmaddaElementManager
 from utils import get_or_initialize_firebase_app
 
 class FirebaseSignUpAndLogin:
-    def __init__(
-        self,
-        firebase_service_account_key_json: str,
-        firebase_app_api_key: str
-    ):
-        self.__firebase_service_account_key_json = (
-            firebase_service_account_key_json
-        )
+    def __init__(self, firebase_service_account_key_json: str, firebase_app_api_key: str,):
+        self.__firebase_service_account_key_json = firebase_service_account_key_json
         self.__firebase_app_api_key = firebase_app_api_key
 
         # Firebase Admin SDK 초기화
-        self.__firebase_app = get_or_initialize_firebase_app(
-            self.__firebase_service_account_key_json
-        )
+        self.__firebase_app = get_or_initialize_firebase_app(self.__firebase_service_account_key_json)
 
     # 회원가입 기능
     def signup(self, email: str, password: str) -> dict[str, Any]:
@@ -187,16 +182,21 @@ class FirebaseSignUpAndLogin:
                 uid,
                 app=self.__firebase_app
             )
+
         except Exception:
-            raise ValueError("사용자 계정을 삭제할 수 없습니다")
+            raise ValueError("사용자 계정을 삭제하지 못했습니다")
 
 # Test Code
 
 def get_test_email():
     return "jjhqp1110@gmail.com"
+
+def get_amadda_element_manager():
+    return AmaddaElementManager(FirebaseChacher(Firebase("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json")))
 def get_firebase_signup_and_login():
     return FirebaseSignUpAndLogin("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json",
-                                  "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds")
+                                  "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds",
+                                  get_amadda_element_manager())
 
 def Test_signup():
     fsal = get_firebase_signup_and_login()
@@ -249,7 +249,7 @@ def Test_signup_and_send_email_verification():
     print("이메일 인증 메시지 발송 성공")
 
 if(__name__ == "__main__"):
-    Test_delete()
+    pass
 
 
 
