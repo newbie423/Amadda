@@ -651,7 +651,10 @@ async def Test_problem_delete():
     #await aem.create_wiki_document("user-1", "subject-1", "variable")
 
     #await aem.create_problem("user-1", "subject-1", "variable", "problem-1", "user_answer-1", "grade-1")
+
+    #print("before :", aem.TEST_GET_CHACHE("ALL"))
     #await aem.delete_problem("user-1", "subject-1", "problem-1")
+    #print("after :", aem.TEST_GET_CHACHE("ALL"))
 
 async def Test_wiki_document_delete():
     aem = get_amadda_element_manager()
@@ -672,16 +675,18 @@ async def Test_subject_delete():
     #await aem.create_wiki_document("user-1", "subject-1", "variable")
     #await aem.create_wiki_document("user-1", "subject-1", "function")
     #await aem.create_problem("user-1", "subject-1", "variable", "problem-1", "user_answer-1", "grade-1")
-    
+
+    #print(aem.TEST_GET_CHACHE("ALL"))
     #await aem.delete_subject("user-1", "subject-1")
+    #print(aem.TEST_GET_CHACHE("ALL"))
 
 async def Test_user_delete():
     aem = get_amadda_element_manager()
 
-    await aem.create_user("user-1", "kevin")
-    await aem.create_subject("user-1", "subject-1", subject_name="python")
-    await aem.create_subject("user-1", "subject-2", subject_name="electronics")
-    await aem.create_wiki_document("user-1", "subject-1", "variable")
+    #await aem.create_user("user-1", "kevin")
+    #await aem.create_subject("user-1", "subject-1", subject_name="python")
+    #await aem.create_subject("user-1", "subject-2", subject_name="electronics")
+    #await aem.create_wiki_document("user-1", "subject-1", "variable")
 
     await aem.delete_user("user-1")
 
