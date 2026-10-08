@@ -188,12 +188,9 @@ class FirebaseSignUpAndLogin:
 def get_test_email():
     return "jjhqp1110@gmail.com"
 
-def get_amadda_element_manager():
-    return AmaddaElementManager(FirebaseChacher(Firebase("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json")))
 def get_firebase_signup_and_login():
     return FirebaseSignUpAndLogin("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json",
-                                  "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds",
-                                  get_amadda_element_manager())
+                                  "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds")
 
 def Test_signup():
     fsal = get_firebase_signup_and_login()

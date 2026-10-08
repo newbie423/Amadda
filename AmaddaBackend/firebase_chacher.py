@@ -453,6 +453,9 @@ class FirebaseChacher:
 
         return string
 
+    def TEST_GET_ELEMS(self):
+        return self.__elems
+
 # ===== TEST CODE
 
 import asyncio

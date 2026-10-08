@@ -575,8 +575,8 @@ class AmaddaElementManager:
 
     # for test
 
-    def TEST_GET_CHACHE(self, X_name:str):
-        return self.__firebase_chacher.PRINT_ELEMS(X_name)
+    def TEST_GET_CHACHE(self):
+        return self.__firebase_chacher.TEST_GET_ELEMS()
 
 # Test code
 
