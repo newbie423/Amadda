@@ -7,6 +7,9 @@ from amadda_element_manager import AmaddaElementManager
 
 from datetime import datetime, timedelta
 
+import os
+import pickle
+
 class Timer:
     def __init__(self):
         # Timer 생성 시점의 현재 시간을 저장
@@ -41,6 +44,33 @@ class AmaddaUserAccountController:
             }
         }'''
 
+        self.__FILE_PATH = "AmaddaBackend/pending_validate_emails.pkl"
+        self.__read_pending_validate_emails()
+
+    # pending_validate_emails를 파일에서 읽어오는 메소드
+    def __read_pending_validate_emails(self):
+        """AmaddaBackend/pending_validate_emails.pkl에 직렬화로 저장되어 있는 내용을 읽어서
+
+        self.__pending_validate_emails에 저장함. 파일이 없어서 읽지 못해 에러가 나는 경우 그냥 아무것도 하지
+        않고 pass
+        """
+        try:
+            with open(self.__FILE_PATH, "rb") as file:
+                self.__pending_validate_emails = pickle.load(file)
+        except FileNotFoundError:
+            pass
+
+    # pending_validate_emails를 파일에 쓰는 메소드
+    def __write_pending_validate_emails(self):
+        """self.__pending_validate_emails에 있는 내용을 직렬화로
+
+        AmaddaBackend/pending_validate_emails.pkl에 저장함
+        """
+        os.makedirs(os.path.dirname(self.__FILE_PATH), exist_ok=True)
+
+        with open(self.__FILE_PATH, "wb") as file:
+            pickle.dump(self.__pending_validate_emails, file)
+
     # 회원가입 메소드
     async def user_signup(self, email:str, password:str, password_check:str):
         # - password와 password_check가 다를 경우 에러 발생(비밀번호 미일치 에러)
@@ -61,6 +91,8 @@ class AmaddaUserAccountController:
             "value":signup_data,
             "password":password
         }
+
+        self.__write_pending_validate_emails()
         
         # 회원가입된 사용자 정보속 uid를 사용해 elem manager를 사용하여 새로운 user를 생성한다
         await self.__amadda_element_manager.create_user(signup_data["user_id"])
@@ -86,6 +118,7 @@ class AmaddaUserAccountController:
         # 이메일 인증이 되어 있는 경우이기에 pending_email_valids에 현재 이메일이 있다면 pop하기
         if(email in self.__pending_validate_emails):
             self.__pending_validate_emails.pop(email)
+            self.__write_pending_validate_emails()
         
         #  사용자의 로그인 성공 반환(로그인 성공 + 사용자 아이디)
         return login_data["user_id"]
@@ -131,6 +164,8 @@ class AmaddaUserAccountController:
                 self.__pending_validate_emails.pop(pending_validate_email)
                 await self.__amadda_element_manager.delete_user(login_data["user_id"])
 
+        self.__write_pending_validate_emails()
+
     # FOR TEST
 
     def TEST_GET_PENDING_VALIDATE_EMAILS(self):
@@ -150,10 +185,13 @@ def get_wrong_password():
 aem = AmaddaElementManager(FirebaseChacher(firebase=Firebase("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json")))
 def get_amadda_element_manager():
     return aem
-def get_amadda_user_account_controller():
-    fsl = FirebaseSignUpAndLogin("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json",
+fsl = FirebaseSignUpAndLogin("AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json",
                                  "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds")
-    return AmaddaUserAccountController(firebase_signup_and_login=fsl,
+def get_firebase_signup_and_login():
+    return fsl
+def get_amadda_user_account_controller():
+    
+    return AmaddaUserAccountController(firebase_signup_and_login=get_firebase_signup_and_login(),
                                        amadda_element_manager=get_amadda_element_manager())
 
 async def reset_environment_to_init_state():
@@ -161,7 +199,7 @@ async def reset_environment_to_init_state():
                                  "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds")
 
     try:
-        login_data = fsl.login("jjhqp1110@gmail.com", "123456")
+        login_data = fsl.login(get_email(), get_password())
         fsl.delete(login_data["user_id"])
     except:
         pass
@@ -386,7 +424,45 @@ async def Test_delete_unvalid_emails_uid():
     except:
         print("Test 2 False")
 
+async def Test_pending_valid_emails_remain():
+    email = get_email()
+    password = get_password()
+    wrong_password = get_wrong_password()
+
+    auac = get_amadda_user_account_controller()
+
+    way = 1 # 매번 프로그램을 실행하여 테스트시, 1부터 시작하여 1씩 더해가면서 수행, 도중에 테스트 실패시 way == 3에 있는 테스트 초기화만 따로 수행하기
+
+    if(way == 1):        
+        # 이곳에 중단점을 설정한뒤 user_signup의 내부로 타고 들어가 pending_valid_emails에 아무것도 없다면 테스트 성공
+        await auac.user_signup("test_mail1@example.com", password, password)
+
+    if(way == 2):
+        # 이곳에 중단점을 설정한뒤 user_signup의 내부로 타고 들어가 pending_valid_emails에
+        # "test_mail1@example.com"이 key로 잘 유지되어 있는지 확인하기, 잘 유지되어 있다면 테스트 성공
+        await auac.user_signup("test_mail2@example.com", password, password)
+
+    if(way == 3):
+        # 이곳에 중단점을 설정한뒤 delete_user_signupp의 내부로 타고 들어가 pending_valid_emails에
+        # test_mail1과 2가 key로 잘 유지되어 있는지 확인하기, 잘 유지되어 있고, 내부에서 잘 삭제까지 하면 테스트 성공
+        await auac.delete_unvalid_emails_uid(0)
+
+        # 다시 테스트 초기의 상태로 되돌리기
+        # "AmaddaBackend/pending_valid_emails.pkl"는 직접 삭제 필요
+        fsl = get_firebase_signup_and_login()
+        try:
+            login_data = fsl.login("test_mail1@example.com", password)
+            fsl.delete(login_data["user_id"])
+        except:
+            pass
+        try:
+            login_data = fsl.login("test_mail2@example.com", password)
+            fsl.delete(login_data["user_id"])
+        except:
+            pass
+
 if(__name__ == "__main__"):
-    asyncio.run(Test_delete_unvalid_emails_uid())
+    #asyncio.run(())
+    pass
 
 
