@@ -235,7 +235,7 @@ class AmaddaElementManager:
                              problem_number:int=0,
                              problem_question:str="",
                              problem_correct_answer:str="",
-                             problem_choices:list[str]=[]):
+                             problem_options:list[str]=[]):
         # Problem 정보 캐싱
         await self.__firebase_chacher.init_Xs("Problem", owner_user_id, owner_subject_id)
 
@@ -261,7 +261,7 @@ class AmaddaElementManager:
             "problem_number":problem_number,
             "problem_question":problem_question,
             "problem_correct_answer":problem_correct_answer,
-            "problem_choices":problem_choices
+            "problem_options":problem_options
         })
 
         # 본인의 owner Wiki_Document를 가져와 본인을 하위관계로 연결한후 Wiki Document를 동기화
