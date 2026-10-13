@@ -43,9 +43,9 @@ class FirebaseChacher:
                 ...
             },
 
-            "나머지": { # TableOfContent를 대표로 작성함, 나머지 Summary, Problem등도 구조 동일
+            "나머지": { # WikiDocument를 대표로 작성함, 나머지 Problem, UserAnswer등도 구조 동일
                 (user_id, subject_id):{
-                    table_of_content_id:table of content info,
+                    wiki_document_id:wiki document info,
                     ...
                     },
                 ...
