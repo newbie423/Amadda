@@ -167,12 +167,14 @@ class LLMWIKI:
             )
 
         # 기존 강의자료 폴더 개수를 기준으로 새 번호 결정
-        material_count = sum(
+        '''material_count = sum(
             1 for path in raw_dir.glob("lecture_material_*")
             if path.is_dir()
-        )
+        )'''
 
-        material_dir = raw_dir / f"lecture_material_{material_count + 1}"
+        from uuid import uuid4
+
+        material_dir = raw_dir / f"{str(uuid4())}"#f"lecture_material_{material_count + 1}"
         material_dir.mkdir()
 
         material_path = material_dir / "index.md"
@@ -249,7 +251,7 @@ print(result)
             else:
                 path.unlink()
 
-    def get_subject_all_llm_wiki_document_content(self, user_id: str, subject_id: str) -> list[dict[str, Any]]:
+    def get_subject_all_llm_wiki_document_contents(self, user_id: str, subject_id: str) -> list[dict[str, Any]]:
         '''
         특정 사용자의 특정 과목에 해당되는 LLMWiki폴더 경로에 저장된 모든 요약된 llm_wiki_document들의 내용을 텍스트로 추출하여 반환해주는 메소드
         '''
@@ -284,6 +286,15 @@ print(result)
             })
 
         return documents
+
+    def get_subject_llm_wiki_document_content(self, user_id:str, subject_id:str, wiki_document_id:str):
+        all_llm_wiki_document_contents = self.get_subject_all_llm_wiki_document_contents(user_id, subject_id)
+
+        for llm_wiki_document_content in all_llm_wiki_document_contents:
+            if(wiki_document_id == llm_wiki_document_content["wiki_document_id"]):
+                return llm_wiki_document_content
+
+        raise ValueError("wiki_document_id not found")
 
     def add_llm_wiki_document(self, user_id: str, subject_id: str, wiki_document_id: str, wiki_document_content: str):
         '''
@@ -387,8 +398,13 @@ def Test_delete_lecture_material():
 
 def Test_get_subject_all_llm_wiki_document_content():
     lw = get_llmwiki()
-    all_llm_wiki_document_content = lw.get_subject_all_llm_wiki_document_content("user-1", "subject-1")
+    all_llm_wiki_document_content = lw.get_subject_all_llm_wiki_document_contents("user-1", "subject-1")
     print(all_llm_wiki_document_content)
+
+def Test_get_subject_llm_wiki_document_content():
+    lw = get_llmwiki()
+    llm_wiki_document_content = lw.get_subject_llm_wiki_document_content("user-1", "subject-1", "simulation")
+    print(llm_wiki_document_content)
 
 def Test_add_llm_wiki_document():
     lw = get_llmwiki()
