@@ -220,5 +220,8 @@ __marimo__/
 # Firebase Admin SDK Secret Key
 amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json
 
+# Gemini Api Key
+gemini_api_key.json
+
 # all user's llm wiki
 LLMWikis/
