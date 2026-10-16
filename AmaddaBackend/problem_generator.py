@@ -1,0 +1,2 @@
+class ProblemGenerator:
+    pass
