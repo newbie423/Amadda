@@ -341,7 +341,7 @@ if __name__ == "__main__":
     from time import time
 
     time1 = time()
-    Test_extract_text_from_mp4()
+    Test_extract_text_from_mp3()
     time2 = time()
 
     print(f"\n처리 시간: {time2 - time1:.2f}초")

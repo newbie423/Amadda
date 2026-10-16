@@ -1,49 +1,32 @@
-import json
-from pathlib import Path
 import time
+
+import os
 
 from google import genai
 from google.genai import errors
+
+from dotenv import load_dotenv
+load_dotenv()  # .env 파일 로드
 
 class LLMWiki:
     """강의자료 요약 및 누적 요약본 통합 클래스."""
 
     MODEL_NAME = "gemini-3.5-flash-lite"
 
-    def __init__(self, api_key_path: str | Path | None = None):
-        # 기본적으로 이 Python 파일과 같은 폴더에서 API 키 파일을 찾는다.
-        if api_key_path is None:
-            api_key_path = Path(__file__).resolve().parent / "gemini_api_key.json"
-        else:
-            api_key_path = Path(api_key_path)
+    def __init__(self):
+        api_key = os.getenv("GEMINI_API_KEY")
 
-        if not api_key_path.is_absolute():
-            api_key_path = Path(__file__).resolve().parent / api_key_path
-
-        if not api_key_path.is_file():
-            raise FileNotFoundError(
-                f"API 키 파일을 찾을 수 없습니다: {api_key_path}"
-            )
-
-        try:
-            with api_key_path.open("r", encoding="utf-8") as file:
-                config = json.load(file)
-        except json.JSONDecodeError as exc:
-            raise ValueError(
-                "gemini_api_key.json의 JSON 형식이 올바르지 않습니다."
-            ) from exc
-
-        api_key = config.get("api_key")
-
+        # 2. API 키가 없거나 빈 문자열인지 확인
         if not isinstance(api_key, str) or not api_key.strip():
             raise ValueError(
-                "gemini_api_key.json에 유효한 api_key를 설정하세요."
+                "GEMINI_API_KEY 환경 변수가 설정되지 않았거나 유효하지 않습니다."
             )
 
+        # 3. 클라이언트 초기화 및 기본 속성 설정
         self._client = genai.Client(api_key=api_key.strip())
         self._summary = ""
 
-    # -------------------------
+  # -------------------------
     # 내부 Gemini 호출
     # -------------------------
     
@@ -76,11 +59,11 @@ class LLMWiki:
                 # 2초, 4초, 8초 순으로 대기한다.
                 wait_seconds = 2 ** (attempt + 1)
 
-                print(
+                '''print(
                     f"Gemini 서버 오류 발생. "
                     f"{wait_seconds}초 후 재시도합니다. "
                     f"({attempt + 1}/{max_attempts})"
-                )
+                )'''
 
                 time.sleep(wait_seconds)
 
@@ -214,7 +197,7 @@ class LLMWiki:
 # Test code
 
 if __name__ == "__main__":
-    wiki = LLMWiki("AmaddaBackend/gemini_api_key.json")
+    wiki = LLMWiki()
 
     # 첫 번째 강의자료:
     # 중복 설명과 여러 개념을 포함
