@@ -1,0 +1,482 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amadda API 테스트</title>
+</head>
+<body>
+    <h1>Amadda API 테스트</h1>
+
+    <p>
+        API 주소:
+        <input id="baseUrl" value="http://127.0.0.1:8000" size="30">
+    </p>
+
+    <h2>테스트 입력값</h2>
+    <p>
+        이메일:
+        <input id="email" type="email" value="jjhqp1110@gmail.com" size="35">
+    </p>
+    <p>
+        비밀번호:
+        <input id="password" type="password" value="123456" size="35">
+    </p>
+    <p>
+        비밀번호 확인:
+        <input id="passwordCheck" type="password" value="123456" size="35">
+    </p>
+    <p>
+        사용자 ID:
+        <input id="userId" type="text" value="WZlh3fovTWcNygwn9E19z3O302E3" size="35">
+    </p>
+    <p>
+        미인증 계정 삭제 기준 시간(초):
+        <input id="elapsedSecond" type="number" value="300" min="0" step="1">
+    </p>
+
+    <h2>회원가입</h2>
+    <button onclick="signup()">회원가입 요청</button>
+
+    <h2>로그인</h2>
+    <button onclick="login()">로그인 요청</button>
+
+    <h2>인증 메일 재전송</h2>
+    <button onclick="resendEmail()">인증 메일 재전송 요청</button>
+
+    <h2>로그아웃</h2>
+    <button onclick="logout()">로그아웃 요청</button>
+
+    <h2>회원탈퇴</h2>
+    <button onclick="deleteUser()">회원탈퇴 요청</button>
+
+    <h2>미인증 계정 삭제</h2>
+    <button onclick="deleteUnverified()">미인증 계정 삭제 요청</button>
+
+    <h2>서버 상태 확인</h2>
+    <button onclick="checkServer()">서버 상태 확인 요청</button>
+
+
+    <!-- ================================================== -->
+    <!-- 강의자료 및 위키 기능 테스트 -->
+    <!-- ================================================== -->
+
+    <hr>
+    <h1>강의자료 및 위키 API 테스트</h1>
+
+    <h2>강의자료 테스트 입력값</h2>
+
+    <p>
+        과목 ID:
+        <input
+            id="subjectId"
+            type="text"
+            placeholder="실제 과목 ID 입력"
+            value="subject-1"
+            size="35"
+        >
+    </p>
+
+    <p>
+        테스트 파일:
+        <br>
+        <small>
+            HTML 파일과 같은 폴더에 있는 아래 파일을 선택하세요.
+            <br>
+            대가야_지식해적단.mp4
+            <br>
+            미국_영토_확장_지식해적단.mp3
+            <br>
+            웹인텔리전스와 탈중앙화.pdf
+            <br>
+            종이_이전_기록_지식해적단.mp3
+        </small>
+    </p>
+
+    <p>
+        <input
+            id="lectureFiles"
+            type="file"
+            accept=".mp3,.mp4,.pdf"
+            multiple
+        >
+    </p>
+
+    <p>
+        <button onclick="uploadLectureMaterials()">
+            강의자료 파일 업로드 요청
+        </button>
+    </p>
+
+
+    <h2>URL을 통한 강의자료 업로드</h2>
+
+    <p>
+        URL을 입력하세요. 여러 URL은 줄바꿈으로 구분합니다.
+    </p>
+
+    <p>
+        <textarea
+            id="lectureUrls"
+            rows="5"
+            cols="60"
+            placeholder="https://example.com/lecture.pdf&#10;https://example.com/lecture.mp3"
+        ></textarea>
+    </p>
+
+    <button onclick="uploadLectureUrls()">
+        URL 강의자료 업로드 요청
+    </button>
+
+
+    <h2>강의자료 업로드 진행 상태 확인</h2>
+
+    <button onclick="checkUploadingStatus()">
+        업로드 진행 상태 조회
+    </button>
+
+
+    <h2>업로드한 강의자료 요약</h2>
+
+    <p>
+        업로드한 자료의 텍스트를 요약하고 위키 문서에 저장합니다.
+    </p>
+
+    <button onclick="summarizeLectureMaterials()">
+        강의자료 요약 요청
+    </button>
+
+
+    <h2>강의자료 요약 완료 상태 확인</h2>
+
+    <button onclick="checkSummarizedStatus()">
+        요약 완료 상태 조회
+    </button>
+
+
+    <h2>전체 위키 문서 조회</h2>
+
+    <button onclick="getAllWikiDocuments()">
+        전체 위키 문서 조회 요청
+    </button>
+
+
+    <h2>응답 결과</h2>
+    <pre id="result">아직 요청하지 않았습니다.</pre>
+
+    <script>
+        function getValue(id) {
+            return document.getElementById(id).value;
+        }
+
+        function baseUrl() {
+            return getValue("baseUrl").trim().replace(/\/+$/, "");
+        }
+
+        async function requestApi(path, method = "GET", body = null) {
+            const result = document.getElementById("result");
+            result.textContent = "요청 중...";
+
+            try {
+                const options = { method, headers: {} };
+
+                if (body !== null) {
+                    options.headers["Content-Type"] = "application/json";
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(baseUrl() + path, options);
+                const text = await response.text();
+
+                let formatted;
+                try {
+                    formatted = JSON.stringify(JSON.parse(text), null, 2);
+                } catch {
+                    formatted = text;
+                }
+
+                result.textContent =
+                    "HTTP 상태 코드: " + response.status + "\n\n" + formatted;
+            } catch (error) {
+                result.textContent =
+                    "요청 실패: " + error.message +
+                    "\n\n서버 실행 여부와 CORS 설정을 확인하세요.";
+            }
+        }
+
+        // =================================================
+        // 기존 회원 API 테스트
+        // =================================================
+
+        function signup() {
+            requestApi("/users/signup", "POST", {
+                email: getValue("email").trim(),
+                password: getValue("password"),
+                password_check: getValue("passwordCheck")
+            });
+        }
+
+        function login() {
+            requestApi("/users/login", "POST", {
+                email: getValue("email").trim(),
+                password: getValue("password")
+            });
+        }
+
+        function resendEmail() {
+            requestApi("/users/resend-email-verification", "POST", {
+                email: getValue("email").trim()
+            });
+        }
+
+        function logout() {
+            requestApi("/users/logout", "POST", {
+                user_id: getValue("userId").trim()
+            });
+        }
+
+        function deleteUser() {
+            if (!confirm("테스트 사용자 계정을 삭제할 수 있습니다. 계속하시겠습니까?")) {
+                return;
+            }
+
+            requestApi("/users/delete", "DELETE", {
+                user_id: getValue("userId").trim()
+            });
+        }
+
+        function deleteUnverified() {
+            if (!confirm("경과 시간이 지난 미인증 계정을 삭제합니다. 계속하시겠습니까?")) {
+                return;
+            }
+
+            const elapsedSecond = Number(getValue("elapsedSecond"));
+
+            if (!Number.isFinite(elapsedSecond) || elapsedSecond < 0) {
+                document.getElementById("result").textContent =
+                    "오류: 삭제 기준 시간은 0 이상의 숫자여야 합니다.";
+                return;
+            }
+
+            requestApi("/users/delete-unverified", "POST", {
+                elapsed_second: elapsedSecond
+            });
+        }
+
+        function checkServer() {
+            requestApi("/", "GET");
+        }
+
+
+        // =================================================
+        // 강의자료 API 공통 입력 검증
+        // =================================================
+
+        function getLectureIdentifiers() {
+            const userId = getValue("userId").trim();
+            const subjectId = getValue("subjectId").trim();
+
+            if (!userId || !subjectId) {
+                throw new Error("사용자 ID와 과목 ID를 입력하세요.");
+            }
+
+            return {
+                user_id: userId,
+                subject_id: subjectId
+            };
+        }
+
+
+        // =================================================
+        // 강의자료 파일 업로드
+        // POST /lecture-materials/upload
+        // =================================================
+
+        async function uploadLectureMaterials() {
+            const result = document.getElementById("result");
+
+            try {
+                const identifiers = getLectureIdentifiers();
+                const files = document.getElementById("lectureFiles").files;
+
+                if (files.length === 0) {
+                    throw new Error("업로드할 파일을 선택하세요.");
+                }
+
+                const formData = new FormData();
+
+                formData.append("user_id", identifiers.user_id);
+                formData.append("subject_id", identifiers.subject_id);
+
+                for (const file of files) {
+                    const extension = file.name
+                        .split(".")
+                        .pop()
+                        .toLowerCase();
+
+                    if (!["mp3", "mp4", "pdf"].includes(extension)) {
+                        throw new Error(
+                            "지원하지 않는 파일 형식입니다: " + file.name
+                        );
+                    }
+
+                    formData.append("files", file);
+                    formData.append("file_types", extension);
+                }
+
+                result.textContent = "강의자료 파일 업로드 요청 중...";
+
+                // FormData 사용 시 Content-Type을 직접 지정하지 않습니다.
+                const response = await fetch(
+                    baseUrl() + "/lecture-materials/upload",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                const text = await response.text();
+
+                let formatted;
+                try {
+                    formatted = JSON.stringify(JSON.parse(text), null, 2);
+                } catch {
+                    formatted = text;
+                }
+
+                result.textContent =
+                    "HTTP 상태 코드: " + response.status + "\n\n" + formatted;
+
+            } catch (error) {
+                result.textContent = "오류: " + error.message;
+            }
+        }
+
+
+        // =================================================
+        // URL 강의자료 업로드
+        // POST /lecture-materials/upload-urls
+        // =================================================
+
+        function uploadLectureUrls() {
+            try {
+                const identifiers = getLectureIdentifiers();
+
+                const urls = getValue("lectureUrls")
+                    .split(/\r?\n/)
+                    .map(url => url.trim())
+                    .filter(url => url.length > 0);
+
+                if (urls.length === 0) {
+                    throw new Error("업로드할 URL을 입력하세요.");
+                }
+
+                requestApi("/lecture-materials/upload-urls", "POST", {
+                    ...identifiers,
+                    urls: urls
+                });
+
+            } catch (error) {
+                document.getElementById("result").textContent =
+                    "오류: " + error.message;
+            }
+        }
+
+
+        // =================================================
+        // 업로드 진행 상태 확인
+        // POST /lecture-materials/is-uploading
+        // =================================================
+
+        function checkUploadingStatus() {
+            try {
+                const identifiers = getLectureIdentifiers();
+
+                requestApi(
+                    "/lecture-materials/is-uploading",
+                    "POST",
+                    identifiers
+                );
+
+            } catch (error) {
+                document.getElementById("result").textContent =
+                    "오류: " + error.message;
+            }
+        }
+
+
+        // =================================================
+        // 업로드한 강의자료 요약
+        // POST /lecture-materials/summarize
+        // =================================================
+
+        function summarizeLectureMaterials() {
+            try {
+                const identifiers = getLectureIdentifiers();
+
+                if (!confirm(
+                    "해당 과목의 대기 중인 강의자료를 요약하시겠습니까?"
+                )) {
+                    return;
+                }
+
+                requestApi(
+                    "/lecture-materials/summarize",
+                    "POST",
+                    identifiers
+                );
+
+            } catch (error) {
+                document.getElementById("result").textContent =
+                    "오류: " + error.message;
+            }
+        }
+
+
+        // =================================================
+        // 요약 완료 상태 확인
+        // POST /lecture-materials/is-summarized
+        // =================================================
+
+        function checkSummarizedStatus() {
+            try {
+                const identifiers = getLectureIdentifiers();
+
+                requestApi(
+                    "/lecture-materials/is-summarized",
+                    "POST",
+                    identifiers
+                );
+
+            } catch (error) {
+                document.getElementById("result").textContent =
+                    "오류: " + error.message;
+            }
+        }
+
+
+        // =================================================
+        // 전체 위키 문서 조회
+        // POST /wiki-documents/get-all
+        // =================================================
+
+        function getAllWikiDocuments() {
+            try {
+                const identifiers = getLectureIdentifiers();
+
+                requestApi(
+                    "/wiki-documents/get-all",
+                    "POST",
+                    identifiers
+                );
+
+            } catch (error) {
+                document.getElementById("result").textContent =
+                    "오류: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
+```

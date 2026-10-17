@@ -1,6 +1,6 @@
 from firebase_admin import firestore_async
 
-from utils import get_or_initialize_firebase_app
+from AmaddaBackend.utils import get_or_initialize_firebase_app
 
 
 class Firebase:

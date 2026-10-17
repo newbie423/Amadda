@@ -1,7 +1,7 @@
 from typing import Any
 
-from my_firebase import Firebase
-from firebase_chacher import FirebaseChacher
+from AmaddaBackend.my_firebase import Firebase
+from AmaddaBackend.firebase_chacher import FirebaseChacher
 
 class AmaddaElementManager:
     def __init__(self, firebase_chacher:FirebaseChacher):
@@ -770,8 +770,11 @@ async def Test_delete_user_all_chache_data():
     #await aem.delete_user_all_chache_data("user-1")
     #print(aem.TEST_GET_CHACHE("ALL"))
 
+async def Test():
+    aem = get_amadda_element_manager()
+    await aem.create_subject("WZlh3fovTWcNygwn9E19z3O302E3", "subject-1", 1, "Test Subject")
 
 if(__name__ == "__main__"):
-    asyncio.run(Test_delete_user_all_chache_data())
+    asyncio.run(Test())
 
 

@@ -230,3 +230,6 @@ LLMWikis/
 *.pdf
 *.mp3
 *.mp4
+
+# pkl
+*.pkl

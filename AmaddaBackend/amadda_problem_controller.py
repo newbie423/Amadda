@@ -1,10 +1,10 @@
 from typing import Any
 from uuid import uuid4
 
-from my_firebase import Firebase
-from firebase_chacher import FirebaseChacher
-from amadda_element_manager import AmaddaElementManager
-from problem_generator import ProblemGenerator
+from AmaddaBackend.my_firebase import Firebase
+from AmaddaBackend.firebase_chacher import FirebaseChacher
+from AmaddaBackend.amadda_element_manager import AmaddaElementManager
+from AmaddaBackend.problem_generator import ProblemGenerator
 
 class AmaddaProblemController:
     def __init__(self,

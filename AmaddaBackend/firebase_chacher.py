@@ -1,4 +1,4 @@
-from my_firebase import Firebase
+from AmaddaBackend.my_firebase import Firebase
 
 # 모든 정보의 내부에는 아래와 같은 특수 요소가 있다
 # document_id -> firebase에서 문서를 가져왔을때 함께 포함되는 정보로
@@ -722,4 +722,3 @@ async def Test_delete_Xs():
 
 if __name__ == "__main__":
     asyncio.run(Test_delete_Xs())
-

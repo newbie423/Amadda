@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 from firebase_admin import auth
 
-from utils import get_or_initialize_firebase_app
+from AmaddaBackend.utils import get_or_initialize_firebase_app
 
 class FirebaseSignUpAndLogin:
     def __init__(self, firebase_service_account_key_json: str, firebase_app_api_key: str,):
@@ -243,7 +243,9 @@ def Test_signup_and_send_email_verification():
     print("이메일 인증 메시지 발송 성공")
 
 if(__name__ == "__main__"):
-    pass
+    fsl = get_firebase_signup_and_login()
+    login_data = fsl.login("jjhqp1110@gmail.com", "123456")
+    fsl.delete(login_data["user_id"])
 
 
 

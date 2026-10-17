@@ -1,9 +1,9 @@
 from typing import Any
 
-from firebase_signup_and_login import FirebaseSignUpAndLogin
-from my_firebase import Firebase
-from firebase_chacher import FirebaseChacher
-from amadda_element_manager import AmaddaElementManager
+from AmaddaBackend.firebase_signup_and_login import FirebaseSignUpAndLogin
+from AmaddaBackend.my_firebase import Firebase
+from AmaddaBackend.firebase_chacher import FirebaseChacher
+from AmaddaBackend.amadda_element_manager import AmaddaElementManager
 
 from datetime import datetime, timedelta
 
@@ -145,6 +145,7 @@ class AmaddaUserAccountController:
     # 회원탈퇴 메소드
     async def user_delete(self, user_id:str):
         # user_id에 해당되는 모든 캐싱 및 firebase 데이터 삭제
+        self.__firebase_signup_and_login.delete(user_id)
         await self.__amadda_element_manager.delete_user(user_id)
         
     # 인증이 되지 않은 사용자 이메일에 대해, 전달된 시간을 초과한 미인증 이메일에 대한 uid삭제

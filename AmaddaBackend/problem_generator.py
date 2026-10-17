@@ -4,10 +4,6 @@ from typing import Any
 from google import genai
 from google.genai import types
 
-import os
-from dotenv import load_dotenv
-
-
 class ProblemGenerator:
     MODEL_NAME = "gemini-3.5-flash-lite"
 
@@ -54,16 +50,8 @@ class ProblemGenerator:
         "propertyOrdering": ["problems"],
     }
 
-    def __init__(self):
-        load_dotenv()
-
-        api_key = os.getenv("GEMINI_API_KEY")
-
-        if not api_key:
-            raise ValueError(
-                "환경변수 GEMINI_API_KEY를 찾을 수 없습니다. "
-                ".env 파일을 확인해 주세요."
-            )
+    def __init__(self, gemini_api_key:str):
+        api_key = gemini_api_key
 
         self.__client = genai.Client(api_key=api_key)
 

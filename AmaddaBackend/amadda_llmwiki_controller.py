@@ -7,11 +7,11 @@ from uuid import uuid4
 
 import fastapi
 
-from my_firebase import Firebase
-from firebase_chacher import FirebaseChacher
-from amadda_element_manager import AmaddaElementManager
-from lecture_material_text_extracter import LectureMaterialTextExtracter
-from my_llmwiki import LLMWiki
+from AmaddaBackend.my_firebase import Firebase
+from AmaddaBackend.firebase_chacher import FirebaseChacher
+from AmaddaBackend.amadda_element_manager import AmaddaElementManager
+from AmaddaBackend.lecture_material_text_extracter import LectureMaterialTextExtracter
+from AmaddaBackend.my_llmwiki import LLMWiki
 
 
 class AmaddaLLMWikiController:
@@ -234,7 +234,12 @@ class AmaddaLLMWikiController:
         임이의 사용자의 임이의 과목에 urls에 있는 강의자료를 업로드 하는 기능
         urls들 중에서 업로드에 실패한 url들은 그대로 반환합니다
         '''
-        pass
+        
+        upload_failed_urls:list[str] = []
+
+        raise ValueError("아직 구현되지 않았습니다")
+        
+        return upload_failed_urls
 
     def is_now_uploading_lecture_material(
         self, user_id: str, subject_id: str
