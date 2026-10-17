@@ -227,6 +227,21 @@ class AmaddaElementManager:
         except:
             raise ValueError("owner user id or owner subject id not found")
 
+    async def get_wiki_document_problems(self, owner_user_id:str, owner_subject_id:str, owner_wiki_document_id:str):
+        # Problem 정보 캐싱
+        await self.__firebase_chacher.init_Xs("Problem", owner_user_id, owner_subject_id)
+
+        # 캐싱된 모든 Problem 정보들중 owner_wiki_document_id가 owner_wiki_document인 문제만 반환
+        all_problems = self.__firebase_chacher.get_Xs("Problem", owner_user_id, owner_subject_id)
+
+        return_problems = []
+
+        for problem in all_problems:
+            if(problem["owner_wiki_document_id"] == owner_wiki_document_id):
+                return_problems += [problem]
+
+        return return_problems
+
     async def create_problem(self, owner_user_id:str, owner_subject_id:str, owner_wiki_document_id:str,
                              problem_id:str,
                              owning_user_answer_id:str,
@@ -273,8 +288,8 @@ class AmaddaElementManager:
         await self.__firebase_chacher.Xs_to_firebase("Wiki_Document", owner_user_id, owner_subject_id)
 
         # 본인에 대한 생성 이후 내부적으로 User_Answer과 Grade도 생성
-        await self.__create_user_answer(owner_user_id, owner_subject_id, problem_id, owning_user_answer_id)
-        await self.__create_grade(owner_user_id, owner_subject_id, problem_id, owning_grade_id)
+        await self.__create_user_answer(owner_user_id, owner_subject_id, owner_wiki_document_id, problem_id, owning_user_answer_id)
+        await self.__create_grade(owner_user_id, owner_subject_id, owner_wiki_document_id, problem_id, owning_grade_id)
 
     async def update_problem(self, owner_user_id:str, owner_subject_id:str, problem_id:str, new_datas:dict[str, Any]):
         # 업데이트할 Problem정보 가져오기
@@ -318,8 +333,23 @@ class AmaddaElementManager:
             return self.__firebase_chacher.get_Xs("User_Answer", owner_user_id, owner_subject_id)
         except:
             raise ValueError("owner user id or owner subject id not found")
-        
-    async def __create_user_answer(self, owner_user_id:str, owner_subject_id:str, owner_problem_id:str,
+
+    async def get_wiki_document_user_answers(self, owner_user_id:str, owner_subject_id:str, owner_wiki_document_id:str):
+        # User_Answer 정보 캐싱
+        await self.__firebase_chacher.init_Xs("User_Answer", owner_user_id, owner_subject_id)
+
+        # 캐싱된 모든 User_Answer 정보들중 owner_wiki_document_id가 owner_wiki_document인 사용자 풀이만 반환
+        all_user_answers = self.__firebase_chacher.get_Xs("User_Answer", owner_user_id, owner_subject_id)
+
+        return_user_answers = []
+
+        for user_answer in all_user_answers:
+            if(user_answer["owner_wiki_document_id"] == owner_wiki_document_id):
+                return_user_answers += [user_answer]
+
+        return return_user_answers
+
+    async def __create_user_answer(self, owner_user_id:str, owner_subject_id:str, owner_wiki_document_id:str, owner_problem_id:str,
                                  user_answer_id:str,
                                  user_answer:str="",
                                  user_answer_state:str="not_answered"):
@@ -341,6 +371,7 @@ class AmaddaElementManager:
         await self.__firebase_chacher.create_X("User_Answer", {
             "owner_user_id":owner_user_id,
             "owner_subject_id":owner_subject_id,
+            "owner_wiki_document_id":owner_wiki_document_id, 
             "owner_problem_id":owner_problem_id,
             "user_answer_id":user_answer_id,
             "user_answer":user_answer,
@@ -398,7 +429,22 @@ class AmaddaElementManager:
         except:
             raise ValueError("owner user id or owner subject id not found")
 
-    async def __create_grade(self, owner_user_id:str, owner_subject_id:str, owner_problem_id:str,
+    async def get_wiki_document_grades(self, owner_user_id:str, owner_subject_id:str, owner_wiki_document_id:str):
+            # Grade 정보 캐싱
+            await self.__firebase_chacher.init_Xs("Grade", owner_user_id, owner_subject_id)
+
+            # 캐싱된 모든 Grade 정보들중 owner_wiki_document_id가 owner_wiki_document인 채점만 반환
+            all_grades = self.__firebase_chacher.get_Xs("Grade", owner_user_id, owner_subject_id)
+
+            return_grades = []
+
+            for grade in all_grades:
+                if(grade["owner_wiki_document_id"] == owner_wiki_document_id):
+                    return_grades += [grade]
+
+            return return_grades
+
+    async def __create_grade(self, owner_user_id:str, owner_subject_id:str, owner_wiki_document_id:str, owner_problem_id:str,
                                  grade_id:str,
                                  grade_state:str="not_graded",
                                  explanation:str=""):
@@ -420,6 +466,7 @@ class AmaddaElementManager:
         await self.__firebase_chacher.create_X("Grade", {
             "owner_user_id":owner_user_id,
             "owner_subject_id":owner_subject_id,
+            "owner_wiki_document_id":owner_wiki_document_id,
             "owner_problem_id":owner_problem_id,
             "grade_id":grade_id,
             "grade_state":grade_state,

@@ -1,3 +1,6 @@
+from typing import Any
+from uuid import uuid4
+
 from my_firebase import Firebase
 from firebase_chacher import FirebaseChacher
 from amadda_element_manager import AmaddaElementManager
@@ -7,10 +10,139 @@ class AmaddaProblemController:
     def __init__(self,
                  amadda_element_manager:AmaddaElementManager,
                  problem_generator:ProblemGenerator):
-        self.__amadda_element_manager = amadda_element_manager
-        self.__problem_generator = problem_generator
+        self.__amadda_element_manager:AmaddaElementManager = amadda_element_manager
+        self.__problem_generator:ProblemGenerator = problem_generator
 
-    <여기 부터 마저 이어서 작성하기>
+        self.__problem_generate_progress:dict[tuple, Any] = {}
+        '''
+        {
+            (user_id, subject_id, wiki_document_id):False # 현재 임이의 유저의 임이의 과목에 대해 문제가 생성되고 있는지 확인하기 위함
+        }
+        '''
+
+    async def create_problems(self, user_id:str, subject_id:str, wiki_document_id:str, generate_rule:dict[str, any]) -> None:
+        '''
+        문제를 생성하는 기능
+
+        [generate_rule 요소]
+
+        문제 총 개수
+        "total_count": 10,
+
+        문제 유형별 개수(총 합이 total_count와 동일해야함)
+        "problem_type_counts": {"ox": 2, "select": 4, "short": 3, "long": 1},
+
+        문제 난이도 "easy", "medium", "hard"중 하나>
+        "difficulty": "medium",
+
+        집중적으로 생성할 문제의 관련 키워드>
+        "focus_keywords": ["가야", "고대 기록 매체", "미국의 영토 확장"],
+
+        문제 출제 범위 "balanced"(전체 골고루, focus_keywords는 무시됨) "focused"(focus_keywords에 있는 것을 중점으로)
+        "coverage": "balanced"
+        '''
+        # 유저의 과목이 존재하는지 가져오는 기능(없으면 에러가 발생)
+        await self.__amadda_element_manager.get_subject(user_id, subject_id)
+
+        if((user_id, subject_id, wiki_document_id) not in self.__problem_generate_progress):
+            self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = False
+
+        if(self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)]):
+            raise ValueError("이미 문제를 생성중입니다, 문제 생성이 완료된 후 다시 시도하세요")
+
+        # 사용자의 기존 모든 문제들 가져오기
+        existing_problems:list[dict[str, Any]] = None
+        
+        try:
+            # 아직 한번도 문제를 만든적이 없다면 에러가 발생됨
+            existing_problems = await self.__amadda_element_manager.get_wiki_document_problems(user_id, subject_id, wiki_document_id)
+        except:
+            existing_problems = []
+
+        created_problems:list[dict, Any] = None
+
+        try:
+            self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = True
+            # problem generator를 사용하여 문제를 생성하기
+            created_problems = self.__problem_generator.generate_problem(generate_rule, wiki_document_id, existing_problems)
+        except:
+            self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = False
+            raise ValueError("문제 생성에 실패하였습니다")
+
+        # amadda element manager를 사용하여 생성된 문제들을 데이터 베이스에 저장하기
+        existing_problems_count = len(existing_problems)
+
+        for idx in range(len(created_problems)):
+            created_problem = created_problems[idx]
+            
+            await self.__amadda_element_manager.create_problem(
+                owner_user_id=user_id,
+                owner_subject_id=subject_id,
+                owner_wiki_document_id=wiki_document_id,
+                problem_id=str(uuid4()),
+                owning_user_answer_id=str(uuid4()),
+                owning_grade_id=str(uuid4()),
+                problem_type=created_problem["problem_type"],
+                problem_number=existing_problems_count + idx + 1,
+                problem_question = created_problem["problem_question"],
+                problem_correct_answer=created_problem["problem_correct_answer"],
+                problem_options=created_problem["problem_options"]
+            )
+        self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = True
+        
+    def is_problem_creating(self, user_id:str, subject_id:str, wiki_document_id:str) -> bool:
+        '''
+        문제가 생성되고 있는지 확인하는 기능
+        생성되고 있으면 True, 아니면 False를 반환
+        '''
+        return self.__problem_generate_progress.get((user_id, subject_id, wiki_document_id), False)
+        
+    async def get_all_problems(self, user_id:str, subject_id:str, wiki_document_id:str) -> list[dict[str, Any]]:
+        '''
+        임이의 위키 문서를 기반으로 생성된 모든 문제 데이터를 반환하는 기능
+        '''
+        return await self.__amadda_element_manager.get_wiki_document_problems(user_id, subject_id, wiki_document_id)
+
+    async def get_all_user_answers(self, user_id:str, subject_id:str, wiki_document_id:str) -> list[dict[str, Any]]:
+        '''
+        임이의 위키 문서를 기반으로 생성된 모든 문제에 대한 사용자 답변 데이터를 반환하는 기능
+        '''
+        return await self.__amadda_element_manager.get_wiki_document_user_answers(user_id, subject_id, wiki_document_id)
+
+    async def get_all_grades(self, user_id:str, subject_id:str, wiki_document_id:str) -> list[dict[str, Any]]:
+        '''
+        임이의 위키 문서를 기반으로 생성된 모든 문제에 대한 채점 데이터를 반환하는 기능
+        '''
+        return await self.__amadda_element_manager.get_wiki_document_grades(user_id, subject_id, wiki_document_id)
+
+    async def update_user_answer(self, user_id:str, subject_id:str, user_answer_id:str, new_datas:dict[str, Any]) -> None:
+        '''
+        사용자 풀이 데이터를 갱신하는 기능
+        '''
+        await self.__amadda_element_manager.update_user_answer(user_id, subject_id, user_answer_id, new_datas)
+
+    async def delete_problem(self, user_id:str, subject_id:str, problem_id:str) -> None:
+        '''
+        임이의 문제를 삭제하는 기능
+        '''
+
+        # 문제를 가져옴(없다면 에러가 발생)
+        problem = await self.__amadda_element_manager.get_problem(user_id, subject_id, problem_id)
+
+        # 가져온 문제의 소유 위키 문서를 토대로 다른 모든 문제들도 가져옴(위의 코드에서 에러가 발생하지 않으면 마찬가지로 발생하지 않음)
+        all_problems = await self.__amadda_element_manager.get_wiki_document_problems(user_id, subject_id, problem["owner_wiki_document_id"])
+
+        # 삭제할 문제의 번호
+        delete_problem_number = problem["problem_number"]
+        
+        await self.__amadda_element_manager.delete_problem(user_id, subject_id, problem["problem_id"])
+
+        # 삭제한 문제의 번호보다 높은 번호를 가진 모든 문제의 번호를 -1하기
+        for problem in all_problems:
+            if(problem["problem_number"] > delete_problem_number):
+                await self.__amadda_element_manager.update_problem(user_id, subject_id, problem["problem_id"], {
+                    "problem_number":problem["problem_number"] - 1
+                })
 
 # For Test code
 def get_amddda_element_manager():
@@ -24,14 +156,61 @@ def get_amadda_problem_controller():
     return AmaddaProblemController(get_amddda_element_manager(),
                                    get_problem_generator())
 
+def get_wiki_document_id():
+    return "1d51e449-4b2f-4cc0-bc4b-6dc72c01402f"
+
 # Test code
 import asyncio
 
-async def Test():
+async def Test_create_problems():
     apc = get_amadda_problem_controller()
 
+    generate_rule = {
+        "total_count": 10,
+        "problem_type_counts": {"ox": 2, "select": 4, "short": 3, "long": 1},
+        "difficulty": "medium",
+        "focus_keywords": ["가야", "고대 기록 매체", "미국의 영토 확장"],
+        "coverage": "balanced",
+    }
+
+    wiki_document_id = get_wiki_document_id()
+
+    await apc.create_problems("user-1", "subject-1", wiki_document_id, generate_rule)
+
+async def Test_get_all_problems():
+    apc = get_amadda_problem_controller()
+
+    all_problems = await apc.get_all_problems("user-1", "subject-1", get_wiki_document_id())
+
+    for problem in all_problems:
+        print(problem)
+
+async def Test_get_all_user_answers():
+    apc = get_amadda_problem_controller()
+
+    all_user_answers = await apc.get_all_user_answers("user-1", "subject-1", get_wiki_document_id())
+    
+    for user_answer in all_user_answers:
+        print(user_answer)
+
+async def Test_get_all_grades():
+    apc = get_amadda_problem_controller()
+
+    all_grades = await apc.get_all_grades("user-1", "subject-1", get_wiki_document_id())
+
+    for grade in all_grades:
+        print(grade)
+
+async def Test_delete_problem():
+    apc = get_amadda_problem_controller()
+
+    problem_id = "7238a0ef-837e-40af-b1e7-47c6ab73a2e1"
+
+    await apc.delete_problem("user-1", "subject-1", problem_id)
+
 if(__name__ == "__main__"):
-    asyncio.run(Test())
+    asyncio.run(Test_delete_problem())
+    pass
 
 
     
