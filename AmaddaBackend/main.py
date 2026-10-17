@@ -30,6 +30,7 @@ def error_response(error: Exception):
         status_code=400, content={"success": False, "message": message, "data": None}
     )
 
+
 # 각종 Amadda관련 객체 생성 및 의존성 주입
 
 from AmaddaBackend.my_firebase import Firebase
@@ -51,11 +52,14 @@ from AmaddaBackend.amadda_problem_controller import AmaddaProblemController
 # env load
 import os
 from dotenv import load_dotenv
+
 ENV_PATH = "AmaddaBackend/.env"
 load_dotenv(dotenv_path=ENV_PATH)
 
 # api keys
-FIREBASE_KEY_JSON_PATH = "AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json"
+FIREBASE_KEY_JSON_PATH = (
+    "AmaddaBackend/amadda-9d5ca-firebase-adminsdk-fbsvc-ba39acb065.json"
+)
 FIREBASE_CLIENT_KEY = "AIzaSyAf8UkeGCgVOHm_GluOUewYv7ROPBWH5Ds"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -209,7 +213,6 @@ async def delete_unvalid_emails_uid(request: DeleteUnverifiedUsersRequest):
 # =========================================================
 ## AmaddaSubjectController
 # =========================================================
-
 
 
 # =========================================================
@@ -395,6 +398,7 @@ async def get_all_wiki_documents(
     except Exception as error:
         return error_response(error)
 
+
 # =========================================================
 ## AmaddaProblemController
 # =========================================================
@@ -404,10 +408,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
-
-# =========================================================
 # 1. 문제 생성
-# =========================================================
+
 
 class CreateProblemsRequest(BaseModel):
     user_id: str
@@ -432,9 +434,8 @@ async def create_problems(request: CreateProblemsRequest):
         return error_response(error)
 
 
-# =========================================================
 # 2. 문제 생성 진행 상태 확인
-# =========================================================
+
 
 class IsProblemCreatingRequest(BaseModel):
     user_id: str
@@ -460,9 +461,8 @@ async def is_problem_creating(request: IsProblemCreatingRequest):
         return error_response(error)
 
 
-# =========================================================
 # 3. 전체 문제 조회
-# =========================================================
+
 
 class GetAllProblemsRequest(BaseModel):
     user_id: str
@@ -488,9 +488,8 @@ async def get_all_problems(request: GetAllProblemsRequest):
         return error_response(error)
 
 
-# =========================================================
 # 4. 전체 사용자 답변 조회
-# =========================================================
+
 
 class GetAllUserAnswersRequest(BaseModel):
     user_id: str
@@ -501,12 +500,10 @@ class GetAllUserAnswersRequest(BaseModel):
 @app.post("/problems/get-all-user-answers")
 async def get_all_user_answers(request: GetAllUserAnswersRequest):
     try:
-        user_answers = (
-            await amadda_problem_controller.get_all_user_answers(
-                user_id=request.user_id,
-                subject_id=request.subject_id,
-                wiki_document_id=request.wiki_document_id,
-            )
+        user_answers = await amadda_problem_controller.get_all_user_answers(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            wiki_document_id=request.wiki_document_id,
         )
 
         return success_response(
@@ -518,9 +515,8 @@ async def get_all_user_answers(request: GetAllUserAnswersRequest):
         return error_response(error)
 
 
-# =========================================================
 # 5. 사용자 답변 수정
-# =========================================================
+
 
 class UpdateUserAnswerRequest(BaseModel):
     user_id: str
@@ -545,9 +541,8 @@ async def update_user_answer(request: UpdateUserAnswerRequest):
         return error_response(error)
 
 
-# =========================================================
 # 6. 문제 삭제
-# =========================================================
+
 
 class DeleteProblemRequest(BaseModel):
     user_id: str
@@ -568,6 +563,7 @@ async def delete_problem(request: DeleteProblemRequest):
 
     except Exception as error:
         return error_response(error)
+
 
 # =========================================================
 ## AmaddaGradeController
