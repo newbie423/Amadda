@@ -109,12 +109,6 @@ class AmaddaProblemController:
         '''
         return await self.__amadda_element_manager.get_wiki_document_user_answers(user_id, subject_id, wiki_document_id)
 
-    async def get_all_grades(self, user_id:str, subject_id:str, wiki_document_id:str) -> list[dict[str, Any]]:
-        '''
-        임이의 위키 문서를 기반으로 생성된 모든 문제에 대한 채점 데이터를 반환하는 기능
-        '''
-        return await self.__amadda_element_manager.get_wiki_document_grades(user_id, subject_id, wiki_document_id)
-
     async def update_user_answer(self, user_id:str, subject_id:str, user_answer_id:str, new_datas:dict[str, Any]) -> None:
         '''
         사용자 풀이 데이터를 갱신하는 기능
@@ -192,14 +186,6 @@ async def Test_get_all_user_answers():
     
     for user_answer in all_user_answers:
         print(user_answer)
-
-async def Test_get_all_grades():
-    apc = get_amadda_problem_controller()
-
-    all_grades = await apc.get_all_grades("user-1", "subject-1", get_wiki_document_id())
-
-    for grade in all_grades:
-        print(grade)
 
 async def Test_delete_problem():
     apc = get_amadda_problem_controller()
