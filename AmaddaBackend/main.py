@@ -210,6 +210,12 @@ async def delete_unvalid_emails_uid(request: DeleteUnverifiedUsersRequest):
 ## AmaddaSubjectController
 # =========================================================
 
+
+
+# =========================================================
+## AmaddaLLMWikiController
+# =========================================================
+
 from typing import Any
 
 from fastapi import File, Form, UploadFile
@@ -389,14 +395,179 @@ async def get_all_wiki_documents(
     except Exception as error:
         return error_response(error)
 
-
-# =========================================================
-## AmaddaLLMWikiController
-# =========================================================
-
 # =========================================================
 ## AmaddaProblemController
 # =========================================================
+
+
+from typing import Any
+
+from pydantic import BaseModel
+
+
+# =========================================================
+# 1. 문제 생성
+# =========================================================
+
+class CreateProblemsRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    wiki_document_id: str
+    generate_rule: dict[str, Any]
+
+
+@app.post("/problems/create")
+async def create_problems(request: CreateProblemsRequest):
+    try:
+        await amadda_problem_controller.create_problems(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            wiki_document_id=request.wiki_document_id,
+            generate_rule=request.generate_rule,
+        )
+
+        return success_response("문제 생성이 완료되었습니다.")
+
+    except Exception as error:
+        return error_response(error)
+
+
+# =========================================================
+# 2. 문제 생성 진행 상태 확인
+# =========================================================
+
+class IsProblemCreatingRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    wiki_document_id: str
+
+
+@app.post("/problems/is-creating")
+async def is_problem_creating(request: IsProblemCreatingRequest):
+    try:
+        is_creating = amadda_problem_controller.is_problem_creating(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            wiki_document_id=request.wiki_document_id,
+        )
+
+        return success_response(
+            "문제 생성 상태를 조회했습니다.",
+            data={"is_creating": is_creating},
+        )
+
+    except Exception as error:
+        return error_response(error)
+
+
+# =========================================================
+# 3. 전체 문제 조회
+# =========================================================
+
+class GetAllProblemsRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    wiki_document_id: str
+
+
+@app.post("/problems/get-all")
+async def get_all_problems(request: GetAllProblemsRequest):
+    try:
+        problems = await amadda_problem_controller.get_all_problems(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            wiki_document_id=request.wiki_document_id,
+        )
+
+        return success_response(
+            "전체 문제 조회가 완료되었습니다.",
+            data={"problems": problems},
+        )
+
+    except Exception as error:
+        return error_response(error)
+
+
+# =========================================================
+# 4. 전체 사용자 답변 조회
+# =========================================================
+
+class GetAllUserAnswersRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    wiki_document_id: str
+
+
+@app.post("/problems/get-all-user-answers")
+async def get_all_user_answers(request: GetAllUserAnswersRequest):
+    try:
+        user_answers = (
+            await amadda_problem_controller.get_all_user_answers(
+                user_id=request.user_id,
+                subject_id=request.subject_id,
+                wiki_document_id=request.wiki_document_id,
+            )
+        )
+
+        return success_response(
+            "전체 사용자 답변 조회가 완료되었습니다.",
+            data={"user_answers": user_answers},
+        )
+
+    except Exception as error:
+        return error_response(error)
+
+
+# =========================================================
+# 5. 사용자 답변 수정
+# =========================================================
+
+class UpdateUserAnswerRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    user_answer_id: str
+    new_datas: dict[str, Any]
+
+
+@app.patch("/problems/user-answers/update")
+async def update_user_answer(request: UpdateUserAnswerRequest):
+    try:
+        await amadda_problem_controller.update_user_answer(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            user_answer_id=request.user_answer_id,
+            new_datas=request.new_datas,
+        )
+
+        return success_response("사용자 답변 수정이 완료되었습니다.")
+
+    except Exception as error:
+        return error_response(error)
+
+
+# =========================================================
+# 6. 문제 삭제
+# =========================================================
+
+class DeleteProblemRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    problem_id: str
+
+
+@app.delete("/problems/delete")
+async def delete_problem(request: DeleteProblemRequest):
+    try:
+        await amadda_problem_controller.delete_problem(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            problem_id=request.problem_id,
+        )
+
+        return success_response("문제 삭제가 완료되었습니다.")
+
+    except Exception as error:
+        return error_response(error)
 
 # =========================================================
 ## AmaddaGradeController

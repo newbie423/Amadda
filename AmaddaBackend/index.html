@@ -1,11 +1,12 @@
-```html
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amadda API 테스트</title>
 </head>
+
 <body>
     <h1>Amadda API 테스트</h1>
 
@@ -69,13 +70,7 @@
 
     <p>
         과목 ID:
-        <input
-            id="subjectId"
-            type="text"
-            placeholder="실제 과목 ID 입력"
-            value="subject-1"
-            size="35"
-        >
+        <input id="subjectId" type="text" placeholder="실제 과목 ID 입력" value="subject-1" size="35">
     </p>
 
     <p>
@@ -95,12 +90,7 @@
     </p>
 
     <p>
-        <input
-            id="lectureFiles"
-            type="file"
-            accept=".mp3,.mp4,.pdf"
-            multiple
-        >
+        <input id="lectureFiles" type="file" accept=".mp3,.mp4,.pdf" multiple>
     </p>
 
     <p>
@@ -117,12 +107,8 @@
     </p>
 
     <p>
-        <textarea
-            id="lectureUrls"
-            rows="5"
-            cols="60"
-            placeholder="https://example.com/lecture.pdf&#10;https://example.com/lecture.mp3"
-        ></textarea>
+        <textarea id="lectureUrls" rows="5" cols="60"
+            placeholder="https://example.com/lecture.pdf&#10;https://example.com/lecture.mp3"></textarea>
     </p>
 
     <button onclick="uploadLectureUrls()">
@@ -477,6 +463,442 @@
             }
         }
     </script>
-</body>
+
+    <body>
+        <div class="container">
+            <h1>Amadda 문제 관리 API 테스트</h1>
+            <p class="description">
+                문제 생성, 조회, 사용자 답변 수정 및 문제 삭제 API를 테스트합니다.
+            </p>
+
+            <!-- 공통 설정 -->
+            <section class="card">
+                <h2>공통 설정</h2>
+
+                <label for="apiBaseUrl">API 기본 주소</label>
+                <input id="apiBaseUrl" type="url" value="http://127.0.0.1:8000" placeholder="http://127.0.0.1:8000">
+
+                <div class="field-grid">
+                    <div>
+                        <label for="userId">사용자 ID</label>
+                        <input id="userId" placeholder="user_id" value="WZlh3fovTWcNygwn9E19z3O302E3">
+                    </div>
+
+                    <div>
+                        <label for="subjectId">과목 ID</label>
+                        <input id="subjectId" placeholder="subject_id" value="subject-1">
+                    </div>
+
+                    <div>
+                        <label for="wikiDocumentId">위키 문서 ID</label>
+                        <input id="wikiDocumentId" placeholder="wiki_document_id" value="918fe0d1-b819-42c0-a4f2-d97f85b34c3a">
+                    </div>
+
+                    <div>
+                        <label for="problemId">문제 ID</label>
+                        <input id="problemId" placeholder="problem_id">
+                    </div>
+                </div>
+
+                <p class="status">
+                    사용자 ID, 과목 ID, 위키 문서 ID는 해당 API에서 사용하는 실제 식별자를 입력하세요.
+                </p>
+            </section>
+
+            <!-- 1. 문제 생성 -->
+            <section class="card">
+                <h2>1. 문제 생성</h2>
+                <p>
+                    <span class="api-path">POST /problems/create</span>
+                </p>
+
+                <label for="generateRule">문제 생성 규칙 (JSON)</label>
+                <textarea id="generateRule">
+    {
+        "total_count": 10,
+        "problem_type_counts": {"ox": 2, "select": 4, "short": 3, "long": 1},
+        "difficulty": "medium",
+        "focus_keywords": ["가야", "고대 기록 매체", "미국의 영토 확장"],
+        "coverage": "balanced"
+    }
+</textarea>
+
+                <p class="status">
+                    위 JSON은 입력 예시입니다. 실제 필드명과 값은
+                    problem_generator.generate_problem()에서 요구하는 형식에 맞게 수정하세요.
+                </p>
+
+                <button onclick="createProblems()">문제 생성 요청</button>
+                <div class="result">
+                    <pre id="createProblemsResult">아직 요청하지 않았습니다.</pre>
+                </div>
+            </section>
+
+            <!-- 2. 문제 생성 상태 -->
+            <section class="card">
+                <h2>2. 문제 생성 진행 상태 확인</h2>
+                <p>
+                    <span class="api-path">POST /problems/is-creating</span>
+                </p>
+
+                <button onclick="checkProblemCreating()">진행 상태 조회</button>
+                <div class="result">
+                    <pre id="problemCreatingResult">아직 요청하지 않았습니다.</pre>
+                </div>
+            </section>
+
+            <!-- 3. 전체 문제 조회 -->
+            <section class="card">
+                <h2>3. 전체 문제 조회</h2>
+                <p>
+                    <span class="api-path">POST /problems/get-all</span>
+                </p>
+
+                <button onclick="getAllProblems()">전체 문제 조회</button>
+                <div class="result">
+                    <pre id="getAllProblemsResult">아직 요청하지 않았습니다.</pre>
+                </div>
+            </section>
+
+            <!-- 4. 전체 사용자 답변 조회 -->
+            <section class="card">
+                <h2>4. 전체 사용자 답변 조회</h2>
+                <p>
+                    <span class="api-path">POST /problems/get-all-user-answers</span>
+                </p>
+
+                <button onclick="getAllUserAnswers()">전체 답변 조회</button>
+                <div class="result">
+                    <pre id="getAllUserAnswersResult">아직 요청하지 않았습니다.</pre>
+                </div>
+            </section>
+
+            <!-- 5. 사용자 답변 수정 -->
+            <section class="card">
+                <h2>5. 사용자 답변 수정</h2>
+                <p>
+                    <span class="api-path">PATCH /problems/user-answers/update</span>
+                </p>
+
+                <label for="userAnswerId">사용자 답변 ID</label>
+                <input id="userAnswerId" placeholder="user_answer_id">
+
+                <label for="newDatas">수정할 데이터 (JSON)</label>
+                <textarea id="newDatas">{
+    "answer": "수정한 답변"
+}</textarea>
+
+                <p class="status">
+                    수정할 필드는 실제 사용자 답변 데이터 구조에 맞게 입력하세요.
+                </p>
+
+                <button onclick="updateUserAnswer()">사용자 답변 수정</button>
+                <div class="result">
+                    <pre id="updateUserAnswerResult">아직 요청하지 않았습니다.</pre>
+                </div>
+            </section>
+
+            <!-- 6. 문제 삭제 -->
+            <section class="card">
+                <h2>6. 문제 삭제</h2>
+                <p>
+                    <span class="api-path">DELETE /problems/delete</span>
+                </p>
+
+                <p class="status">
+                    문제 삭제는 실제 데이터에 영향을 줄 수 있습니다. 삭제할 문제 ID를 확인하세요.
+                </p>
+
+                <button class="danger" onclick="deleteProblem()">문제 삭제</button>
+                <div class="result">
+                    <pre id="deleteProblemResult">아직 요청하지 않았습니다.</pre>
+                </div>
+            </section>
+        </div>
+
+        <script>
+            /**
+             * 공통 입력값
+             */
+            function getCommonData() {
+                return {
+                    user_id: document.getElementById("userId").value.trim(),
+                    subject_id: document.getElementById("subjectId").value.trim(),
+                    wiki_document_id: document.getElementById("wikiDocumentId").value.trim()
+                };
+            }
+
+            /**
+             * API 기본 주소와 경로를 결합합니다.
+             */
+            function getApiUrl(path) {
+                const baseUrl = document
+                    .getElementById("apiBaseUrl")
+                    .value
+                    .trim()
+                    .replace(/\/+$/, "");
+
+                if (!baseUrl) {
+                    throw new Error("API 기본 주소를 입력하세요.");
+                }
+
+                return `${baseUrl}${path}`;
+            }
+
+            /**
+             * 결과를 화면에 표시합니다.
+             */
+            function showResult(elementId, data) {
+                const element = document.getElementById(elementId);
+
+                if (typeof data === "string") {
+                    element.textContent = data;
+                } else {
+                    element.textContent = JSON.stringify(data, null, 2);
+                }
+            }
+
+            /**
+             * 공통 API 요청 함수
+             */
+            async function requestApi({
+                path,
+                method = "POST",
+                body,
+                resultId
+            }) {
+                showResult(resultId, "요청 중...");
+
+                try {
+                    const options = {
+                        method,
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    };
+
+                    if (body !== undefined) {
+                        options.body = JSON.stringify(body);
+                    }
+
+                    const response = await fetch(getApiUrl(path), options);
+
+                    const responseText = await response.text();
+                    let responseData;
+
+                    try {
+                        responseData = responseText
+                            ? JSON.parse(responseText)
+                            : null;
+                    } catch {
+                        responseData = responseText;
+                    }
+
+                    const result = {
+                        http_status: response.status,
+                        http_ok: response.ok,
+                        response: responseData
+                    };
+
+                    showResult(resultId, result);
+                    return result;
+                } catch (error) {
+                    const message = {
+                        error: error.message,
+                        hint: "서버 실행 여부, API 주소, CORS 설정을 확인하세요."
+                    };
+
+                    showResult(resultId, message);
+                    return null;
+                }
+            }
+
+            /**
+             * 공통 필수 입력값 확인
+             */
+            function validateCommonData(includeWikiDocumentId = true) {
+                const data = getCommonData();
+
+                if (!data.user_id) {
+                    alert("사용자 ID를 입력하세요.");
+                    return null;
+                }
+
+                if (!data.subject_id) {
+                    alert("과목 ID를 입력하세요.");
+                    return null;
+                }
+
+                if (includeWikiDocumentId && !data.wiki_document_id) {
+                    alert("위키 문서 ID를 입력하세요.");
+                    return null;
+                }
+
+                return data;
+            }
+
+            /**
+             * 1. 문제 생성
+             * POST /problems/create
+             */
+            async function createProblems() {
+                const common = validateCommonData();
+
+                if (!common) return;
+
+                let generateRule;
+
+                try {
+                    generateRule = JSON.parse(
+                        document.getElementById("generateRule").value
+                    );
+                } catch {
+                    alert("문제 생성 규칙이 올바른 JSON 형식이 아닙니다.");
+                    return;
+                }
+
+                await requestApi({
+                    path: "/problems/create",
+                    method: "POST",
+                    body: {
+                        ...common,
+                        generate_rule: generateRule
+                    },
+                    resultId: "createProblemsResult"
+                });
+            }
+
+            /**
+             * 2. 문제 생성 진행 상태 확인
+             * POST /problems/is-creating
+             */
+            async function checkProblemCreating() {
+                const common = validateCommonData();
+
+                if (!common) return;
+
+                await requestApi({
+                    path: "/problems/is-creating",
+                    method: "POST",
+                    body: common,
+                    resultId: "problemCreatingResult"
+                });
+            }
+
+            /**
+             * 3. 전체 문제 조회
+             * POST /problems/get-all
+             */
+            async function getAllProblems() {
+                const common = validateCommonData();
+
+                if (!common) return;
+
+                await requestApi({
+                    path: "/problems/get-all",
+                    method: "POST",
+                    body: common,
+                    resultId: "getAllProblemsResult"
+                });
+            }
+
+            /**
+             * 4. 전체 사용자 답변 조회
+             * POST /problems/get-all-user-answers
+             */
+            async function getAllUserAnswers() {
+                const common = validateCommonData();
+
+                if (!common) return;
+
+                await requestApi({
+                    path: "/problems/get-all-user-answers",
+                    method: "POST",
+                    body: common,
+                    resultId: "getAllUserAnswersResult"
+                });
+            }
+
+            /**
+             * 5. 사용자 답변 수정
+             * PATCH /problems/user-answers/update
+             */
+            async function updateUserAnswer() {
+                const common = validateCommonData(false);
+
+                if (!common) return;
+
+                const userAnswerId = document
+                    .getElementById("userAnswerId")
+                    .value
+                    .trim();
+
+                if (!userAnswerId) {
+                    alert("사용자 답변 ID를 입력하세요.");
+                    return;
+                }
+
+                let newDatas;
+
+                try {
+                    newDatas = JSON.parse(
+                        document.getElementById("newDatas").value
+                    );
+                } catch {
+                    alert("수정할 데이터가 올바른 JSON 형식이 아닙니다.");
+                    return;
+                }
+
+                await requestApi({
+                    path: "/problems/user-answers/update",
+                    method: "PATCH",
+                    body: {
+                        user_id: common.user_id,
+                        subject_id: common.subject_id,
+                        user_answer_id: userAnswerId,
+                        new_datas: newDatas
+                    },
+                    resultId: "updateUserAnswerResult"
+                });
+            }
+
+            /**
+             * 6. 문제 삭제
+             * DELETE /problems/delete
+             */
+            async function deleteProblem() {
+                const common = validateCommonData(false);
+
+                if (!common) return;
+
+                const problemId = document
+                    .getElementById("problemId")
+                    .value
+                    .trim();
+
+                if (!problemId) {
+                    alert("문제 ID를 입력하세요.");
+                    return;
+                }
+
+                const confirmed = confirm(
+                    `문제 ID "${problemId}"를 삭제하시겠습니까?`
+                );
+
+                if (!confirmed) return;
+
+                await requestApi({
+                    path: "/problems/delete",
+                    method: "DELETE",
+                    body: {
+                        user_id: common.user_id,
+                        subject_id: common.subject_id,
+                        problem_id: problemId
+                    },
+                    resultId: "deleteProblemResult"
+                });
+            }
+        </script>
+    </body>
+
 </html>
-```
