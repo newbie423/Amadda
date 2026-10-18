@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmaddaSubjectController</title>
+</head>
+<body>
+    <h1>Amadda 과목 API 테스트</h1>
+
+    <p>
+        <label for="amaddaSubjectApiBaseUrl">FastAPI 기본 주소:</label>
+        <input id="amaddaSubjectApiBaseUrl" type="text" value="http://127.0.0.1:8000">
+    </p>
+
+    <hr>
+
+    <section>
+        <h2>1. 사용자의 모든 과목 조회</h2>
+        <p>
+            <label for="amaddaSubjectGetAllUserId">사용자 ID:</label>
+            <input id="amaddaSubjectGetAllUserId" type="text">
+        </p>
+        <button type="button" onclick="amaddaSubjectGetAll()">과목 조회</button>
+        <pre id="amaddaSubjectGetAllResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>2. 과목 생성</h2>
+        <p>
+            <label for="amaddaSubjectCreateUserId">사용자 ID:</label>
+            <input id="amaddaSubjectCreateUserId" type="text">
+        </p>
+        <button type="button" onclick="amaddaSubjectCreate()">과목 생성</button>
+        <pre id="amaddaSubjectCreateResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>3. 과목 정보 수정</h2>
+        <p>
+            <label for="amaddaSubjectUpdateUserId">사용자 ID:</label>
+            <input id="amaddaSubjectUpdateUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaSubjectUpdateSubjectId">과목 ID:</label>
+            <input id="amaddaSubjectUpdateSubjectId" type="text">
+        </p>
+        <p>
+            <label for="amaddaSubjectUpdateName">새 과목명 (선택):</label>
+            <input id="amaddaSubjectUpdateName" type="text">
+        </p>
+        <p>
+            <label for="amaddaSubjectUpdateNumber">새 과목 번호 (선택):</label>
+            <input id="amaddaSubjectUpdateNumber" type="text">
+        </p>
+        <p>입력한 항목만 수정 요청에 포함됩니다. 과목명과 과목 번호를 모두 비우면 요청하지 않습니다.</p>
+        <button type="button" onclick="amaddaSubjectUpdate()">과목 정보 수정</button>
+        <pre id="amaddaSubjectUpdateResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>4. 과목 삭제</h2>
+        <p>
+            <label for="amaddaSubjectDeleteUserId">사용자 ID:</label>
+            <input id="amaddaSubjectDeleteUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaSubjectDeleteSubjectId">과목 ID:</label>
+            <input id="amaddaSubjectDeleteSubjectId" type="text">
+        </p>
+        <button type="button" onclick="amaddaSubjectDelete()">과목 삭제</button>
+        <pre id="amaddaSubjectDeleteResult" aria-live="polite"></pre>
+    </section>
+
+    <script>
+        async function amaddaSubjectRequest(path, method, payload, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            const baseUrl = document.getElementById("amaddaSubjectApiBaseUrl").value.trim().replace(/\/+$/, "");
+
+            if (!baseUrl) {
+                resultElement.textContent = "오류: FastAPI 기본 주소를 입력해 주세요.";
+                return null;
+            }
+
+            resultElement.textContent = "요청 중...";
+
+            try {
+                const response = await fetch(baseUrl + path, {
+                    method: method,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: payload === null ? undefined : JSON.stringify(payload)
+                });
+
+                const responseText = await response.text();
+                let responseData;
+
+                try {
+                    responseData = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    responseData = { raw_response: responseText };
+                }
+
+                resultElement.textContent =
+                    "HTTP 상태 코드: " + response.status + " " + response.statusText + "\n" +
+                    JSON.stringify(responseData, null, 2);
+
+                return { ok: response.ok, data: responseData };
+            } catch (error) {
+                resultElement.textContent =
+                    "요청 실패: " + error.message +
+                    "\nFastAPI 서버 실행 여부, 기본 주소, CORS 설정을 확인해 주세요.";
+                return null;
+            }
+        }
+
+        async function amaddaSubjectGetAll() {
+            const user_id = document.getElementById("amaddaSubjectGetAllUserId").value.trim();
+
+            if (!user_id) {
+                document.getElementById("amaddaSubjectGetAllResult").textContent = "사용자 ID를 입력해 주세요.";
+                return;
+            }
+
+            await amaddaSubjectRequest(
+                "/subjects/get-all", "POST",
+                { user_id },
+                "amaddaSubjectGetAllResult"
+            );
+        }
+
+        async function amaddaSubjectCreate() {
+            const user_id = document.getElementById("amaddaSubjectCreateUserId").value.trim();
+
+            if (!user_id) {
+                document.getElementById("amaddaSubjectCreateResult").textContent = "사용자 ID를 입력해 주세요.";
+                return;
+            }
+
+            const result = await amaddaSubjectRequest(
+                "/subjects/create", "POST",
+                { user_id },
+                "amaddaSubjectCreateResult"
+            );
+
+            if (result && result.ok) {
+                const responseData = result.data;
+                const subject = responseData && responseData.data
+                    ? responseData.data.subject
+                    : null;
+
+                if (subject && typeof subject === "object") {
+                    if (subject.subject_id !== undefined) {
+                        document.getElementById("amaddaSubjectUpdateSubjectId").value = subject.subject_id;
+                        document.getElementById("amaddaSubjectDeleteSubjectId").value = subject.subject_id;
+                    }
+                    if (subject.id !== undefined) {
+                        document.getElementById("amaddaSubjectUpdateSubjectId").value = subject.id;
+                        document.getElementById("amaddaSubjectDeleteSubjectId").value = subject.id;
+                    }
+                }
+
+                document.getElementById("amaddaSubjectUpdateUserId").value = user_id;
+                document.getElementById("amaddaSubjectDeleteUserId").value = user_id;
+                document.getElementById("amaddaSubjectGetAllUserId").value = user_id;
+            }
+        }
+
+        async function amaddaSubjectUpdate() {
+            const user_id = document.getElementById("amaddaSubjectUpdateUserId").value.trim();
+            const subject_id = document.getElementById("amaddaSubjectUpdateSubjectId").value.trim();
+            const subject_name = document.getElementById("amaddaSubjectUpdateName").value.trim();
+            const subject_number = document.getElementById("amaddaSubjectUpdateNumber").value.trim();
+
+            if (!user_id || !subject_id) {
+                document.getElementById("amaddaSubjectUpdateResult").textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+
+            const new_datas = {};
+
+            if (subject_name) {
+                new_datas.subject_name = subject_name;
+            }
+            if (subject_number) {
+                new_datas.subject_number = subject_number;
+            }
+
+            if (Object.keys(new_datas).length === 0) {
+                document.getElementById("amaddaSubjectUpdateResult").textContent = "수정할 과목명 또는 과목 번호를 하나 이상 입력해 주세요.";
+                return;
+            }
+
+            await amaddaSubjectRequest(
+                "/subjects/update", "PATCH",
+                { user_id, subject_id, new_datas },
+                "amaddaSubjectUpdateResult"
+            );
+        }
+
+        async function amaddaSubjectDelete() {
+            const user_id = document.getElementById("amaddaSubjectDeleteUserId").value.trim();
+            const subject_id = document.getElementById("amaddaSubjectDeleteSubjectId").value.trim();
+
+            if (!user_id || !subject_id) {
+                document.getElementById("amaddaSubjectDeleteResult").textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+
+            if (!confirm("정말로 이 과목을 삭제하시겠습니까?")) {
+                return;
+            }
+
+            await amaddaSubjectRequest(
+                "/subjects/delete", "DELETE",
+                { user_id, subject_id },
+                "amaddaSubjectDeleteResult"
+            );
+        }
+    </script>
+</body>
+</html>

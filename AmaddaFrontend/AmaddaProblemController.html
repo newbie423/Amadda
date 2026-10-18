@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmaddaProblemController</title>
+</head>
+<body>
+    <h1>Amadda 문제 및 사용자 답변 API 테스트</h1>
+
+    <p>
+        <label for="amaddaProblemApiBaseUrl">FastAPI 기본 주소:</label>
+        <input id="amaddaProblemApiBaseUrl" type="text" value="http://127.0.0.1:8000">
+    </p>
+
+    <hr>
+
+    <section>
+        <h2>1. 문제 생성</h2>
+        <p><label for="amaddaProblemCreateUserId">사용자 ID:</label>
+            <input id="amaddaProblemCreateUserId" type="text"></p>
+        <p><label for="amaddaProblemCreateSubjectId">과목 ID:</label>
+            <input id="amaddaProblemCreateSubjectId" type="text"></p>
+        <p><label for="amaddaProblemCreateWikiDocumentId">위키 문서 ID:</label>
+            <input id="amaddaProblemCreateWikiDocumentId" type="text"></p>
+
+        <h3>문제 생성 규칙</h3>
+        <p><label for="amaddaProblemTotalCount">전체 문제 수:</label>
+            <input id="amaddaProblemTotalCount" type="number" min="1" step="1" value="10"></p>
+        <p><label for="amaddaProblemOxCount">OX 문제 수:</label>
+            <input id="amaddaProblemOxCount" type="number" min="0" step="1" value="2"></p>
+        <p><label for="amaddaProblemSelectCount">선택형 문제 수:</label>
+            <input id="amaddaProblemSelectCount" type="number" min="0" step="1" value="4"></p>
+        <p><label for="amaddaProblemShortCount">단답형 문제 수:</label>
+            <input id="amaddaProblemShortCount" type="number" min="0" step="1" value="3"></p>
+        <p><label for="amaddaProblemLongCount">서술형 문제 수:</label>
+            <input id="amaddaProblemLongCount" type="number" min="0" step="1" value="1"></p>
+        <p><label for="amaddaProblemDifficulty">난이도:</label>
+            <select id="amaddaProblemDifficulty">
+                <option value="easy">easy (쉬움)</option>
+                <option value="medium" selected>medium (보통)</option>
+                <option value="hard">hard (어려움)</option>
+            </select>
+        </p>
+        <p><label for="amaddaProblemFocusKeywords">집중 키워드 (한 줄에 하나씩):</label><br>
+            <textarea id="amaddaProblemFocusKeywords" rows="4" cols="50" placeholder="예: 가야&#10;고대 기록 매체"></textarea></p>
+        <p><label for="amaddaProblemCoverage">범위 설정:</label>
+            <select id="amaddaProblemCoverage">
+                <option value="balanced" selected>balanced (균형 있게)</option>
+                <option value="focused">focused (키워드 중심)</option>
+            </select>
+        </p>
+        <button type="button" onclick="amaddaProblemCreate()">문제 생성 요청</button>
+        <pre id="amaddaProblemCreateResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>2. 문제 생성 진행 상태 확인</h2>
+        <p><label for="amaddaProblemCreatingUserId">사용자 ID:</label>
+            <input id="amaddaProblemCreatingUserId" type="text"></p>
+        <p><label for="amaddaProblemCreatingSubjectId">과목 ID:</label>
+            <input id="amaddaProblemCreatingSubjectId" type="text"></p>
+        <p><label for="amaddaProblemCreatingWikiDocumentId">위키 문서 ID:</label>
+            <input id="amaddaProblemCreatingWikiDocumentId" type="text"></p>
+        <button type="button" onclick="amaddaProblemCheckCreating()">생성 상태 확인</button>
+        <pre id="amaddaProblemCreatingResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>3. 전체 문제 조회</h2>
+        <p><label for="amaddaProblemGetAllUserId">사용자 ID:</label>
+            <input id="amaddaProblemGetAllUserId" type="text"></p>
+        <p><label for="amaddaProblemGetAllSubjectId">과목 ID:</label>
+            <input id="amaddaProblemGetAllSubjectId" type="text"></p>
+        <p><label for="amaddaProblemGetAllWikiDocumentId">위키 문서 ID:</label>
+            <input id="amaddaProblemGetAllWikiDocumentId" type="text"></p>
+        <button type="button" onclick="amaddaProblemGetAll()">전체 문제 조회</button>
+        <pre id="amaddaProblemGetAllResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>4. 전체 사용자 답변 조회</h2>
+        <p><label for="amaddaProblemAnswersUserId">사용자 ID:</label>
+            <input id="amaddaProblemAnswersUserId" type="text"></p>
+        <p><label for="amaddaProblemAnswersSubjectId">과목 ID:</label>
+            <input id="amaddaProblemAnswersSubjectId" type="text"></p>
+        <p><label for="amaddaProblemAnswersWikiDocumentId">위키 문서 ID:</label>
+            <input id="amaddaProblemAnswersWikiDocumentId" type="text"></p>
+        <button type="button" onclick="amaddaProblemGetAllUserAnswers()">사용자 답변 조회</button>
+        <pre id="amaddaProblemAnswersResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>5. 사용자 답변 수정</h2>
+        <p><label for="amaddaProblemUpdateAnswerUserId">사용자 ID:</label>
+            <input id="amaddaProblemUpdateAnswerUserId" type="text"></p>
+        <p><label for="amaddaProblemUpdateAnswerSubjectId">과목 ID:</label>
+            <input id="amaddaProblemUpdateAnswerSubjectId" type="text"></p>
+        <p><label for="amaddaProblemUpdateAnswerId">사용자 답변 ID:</label>
+            <input id="amaddaProblemUpdateAnswerId" type="text"></p>
+        <p><label for="amaddaProblemUpdateAnswerNewDatas">수정할 데이터 (JSON):</label><br>
+            <textarea id="amaddaProblemUpdateAnswerNewDatas" rows="5" cols="60" placeholder='{"user_answer": "수정한 답변"}'></textarea></p>
+        <p>백엔드에서 허용하는 사용자 답변 필드에 맞게 JSON을 입력하세요. 바깥쪽 객체 안에 수정할 필드를 작성합니다.</p>
+        <button type="button" onclick="amaddaProblemUpdateUserAnswer()">사용자 답변 수정</button>
+        <pre id="amaddaProblemUpdateAnswerResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>6. 문제 삭제</h2>
+        <p><label for="amaddaProblemDeleteUserId">사용자 ID:</label>
+            <input id="amaddaProblemDeleteUserId" type="text"></p>
+        <p><label for="amaddaProblemDeleteSubjectId">과목 ID:</label>
+            <input id="amaddaProblemDeleteSubjectId" type="text"></p>
+        <p><label for="amaddaProblemDeleteProblemId">문제 ID:</label>
+            <input id="amaddaProblemDeleteProblemId" type="text"></p>
+        <button type="button" onclick="amaddaProblemDelete()">문제 삭제</button>
+        <pre id="amaddaProblemDeleteResult" aria-live="polite"></pre>
+    </section>
+
+    <script>
+        async function amaddaProblemRequest(path, method, payload, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            const baseUrl = document.getElementById("amaddaProblemApiBaseUrl").value.trim().replace(/\/+$/, "");
+
+            if (!baseUrl) {
+                resultElement.textContent = "오류: FastAPI 기본 주소를 입력해 주세요.";
+                return null;
+            }
+
+            resultElement.textContent = "요청 중...";
+
+            try {
+                const response = await fetch(baseUrl + path, {
+                    method: method,
+                    headers: { "Content-Type": "application/json" },
+                    body: payload === null ? undefined : JSON.stringify(payload)
+                });
+
+                const responseText = await response.text();
+                let responseData;
+                try {
+                    responseData = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    responseData = { raw_response: responseText };
+                }
+
+                resultElement.textContent =
+                    "HTTP 상태 코드: " + response.status + " " + response.statusText + "\n" +
+                    JSON.stringify(responseData, null, 2);
+
+                return { ok: response.ok, data: responseData };
+            } catch (error) {
+                resultElement.textContent =
+                    "요청 실패: " + error.message +
+                    "\nFastAPI 서버 실행 여부, 기본 주소, CORS 설정을 확인해 주세요.";
+                return null;
+            }
+        }
+
+        function amaddaProblemSyncCommonFields(sourceUserId, sourceSubjectId, sourceWikiId) {
+            const userId = document.getElementById(sourceUserId).value.trim();
+            const subjectId = document.getElementById(sourceSubjectId).value.trim();
+            const wikiId = document.getElementById(sourceWikiId).value.trim();
+
+            const groups = [
+                ["amaddaProblemCreateUserId", "amaddaProblemCreateSubjectId", "amaddaProblemCreateWikiDocumentId"],
+                ["amaddaProblemCreatingUserId", "amaddaProblemCreatingSubjectId", "amaddaProblemCreatingWikiDocumentId"],
+                ["amaddaProblemGetAllUserId", "amaddaProblemGetAllSubjectId", "amaddaProblemGetAllWikiDocumentId"],
+                ["amaddaProblemAnswersUserId", "amaddaProblemAnswersSubjectId", "amaddaProblemAnswersWikiDocumentId"]
+            ];
+
+            for (const group of groups) {
+                document.getElementById(group[0]).value = userId;
+                document.getElementById(group[1]).value = subjectId;
+                document.getElementById(group[2]).value = wikiId;
+            }
+
+            document.getElementById("amaddaProblemUpdateAnswerUserId").value = userId;
+            document.getElementById("amaddaProblemUpdateAnswerSubjectId").value = subjectId;
+            document.getElementById("amaddaProblemDeleteUserId").value = userId;
+            document.getElementById("amaddaProblemDeleteSubjectId").value = subjectId;
+        }
+
+        function amaddaProblemReadGenerateRule() {
+            const totalCount = Number(document.getElementById("amaddaProblemTotalCount").value);
+            const oxCount = Number(document.getElementById("amaddaProblemOxCount").value);
+            const selectCount = Number(document.getElementById("amaddaProblemSelectCount").value);
+            const shortCount = Number(document.getElementById("amaddaProblemShortCount").value);
+            const longCount = Number(document.getElementById("amaddaProblemLongCount").value);
+
+            const counts = [totalCount, oxCount, selectCount, shortCount, longCount];
+            if (counts.some(value => !Number.isInteger(value) || value < 0) || totalCount < 1) {
+                throw new Error("전체 문제 수는 1 이상의 정수이고, 유형별 문제 수는 0 이상의 정수여야 합니다.");
+            }
+
+            const typeSum = oxCount + selectCount + shortCount + longCount;
+            if (typeSum !== totalCount) {
+                throw new Error("유형별 문제 수의 합(" + typeSum + ")이 전체 문제 수(" + totalCount + ")와 일치해야 합니다.");
+            }
+
+            const focus_keywords = document.getElementById("amaddaProblemFocusKeywords").value
+                .split(/\r?\n/)
+                .map(keyword => keyword.trim())
+                .filter(Boolean);
+
+            return {
+                total_count: totalCount,
+                problem_type_counts: {
+                    ox: oxCount,
+                    select: selectCount,
+                    short: shortCount,
+                    long: longCount
+                },
+                difficulty: document.getElementById("amaddaProblemDifficulty").value,
+                focus_keywords,
+                coverage: document.getElementById("amaddaProblemCoverage").value
+            };
+        }
+
+        async function amaddaProblemCreate() {
+            const user_id = document.getElementById("amaddaProblemCreateUserId").value.trim();
+            const subject_id = document.getElementById("amaddaProblemCreateSubjectId").value.trim();
+            const wiki_document_id = document.getElementById("amaddaProblemCreateWikiDocumentId").value.trim();
+            const resultElement = document.getElementById("amaddaProblemCreateResult");
+
+            if (!user_id || !subject_id || !wiki_document_id) {
+                resultElement.textContent = "사용자 ID, 과목 ID, 위키 문서 ID를 모두 입력해 주세요.";
+                return;
+            }
+
+            let generate_rule;
+            try {
+                generate_rule = amaddaProblemReadGenerateRule();
+            } catch (error) {
+                resultElement.textContent = error.message;
+                return;
+            }
+
+            if (!confirm("지정한 규칙으로 문제 생성을 시작하시겠습니까?")) return;
+
+            amaddaProblemSyncCommonFields(
+                "amaddaProblemCreateUserId",
+                "amaddaProblemCreateSubjectId",
+                "amaddaProblemCreateWikiDocumentId"
+            );
+
+            await amaddaProblemRequest(
+                "/problems/create", "POST",
+                { user_id, subject_id, wiki_document_id, generate_rule },
+                "amaddaProblemCreateResult"
+            );
+        }
+
+        async function amaddaProblemCheckCreating() {
+            const user_id = document.getElementById("amaddaProblemCreatingUserId").value.trim();
+            const subject_id = document.getElementById("amaddaProblemCreatingSubjectId").value.trim();
+            const wiki_document_id = document.getElementById("amaddaProblemCreatingWikiDocumentId").value.trim();
+
+            if (!user_id || !subject_id || !wiki_document_id) {
+                document.getElementById("amaddaProblemCreatingResult").textContent = "사용자 ID, 과목 ID, 위키 문서 ID를 모두 입력해 주세요.";
+                return;
+            }
+
+            amaddaProblemSyncCommonFields(
+                "amaddaProblemCreatingUserId",
+                "amaddaProblemCreatingSubjectId",
+                "amaddaProblemCreatingWikiDocumentId"
+            );
+
+            await amaddaProblemRequest(
+                "/problems/is-creating", "POST",
+                { user_id, subject_id, wiki_document_id },
+                "amaddaProblemCreatingResult"
+            );
+        }
+
+        async function amaddaProblemGetAll() {
+            const user_id = document.getElementById("amaddaProblemGetAllUserId").value.trim();
+            const subject_id = document.getElementById("amaddaProblemGetAllSubjectId").value.trim();
+            const wiki_document_id = document.getElementById("amaddaProblemGetAllWikiDocumentId").value.trim();
+
+            if (!user_id || !subject_id || !wiki_document_id) {
+                document.getElementById("amaddaProblemGetAllResult").textContent = "사용자 ID, 과목 ID, 위키 문서 ID를 모두 입력해 주세요.";
+                return;
+            }
+
+            amaddaProblemSyncCommonFields(
+                "amaddaProblemGetAllUserId",
+                "amaddaProblemGetAllSubjectId",
+                "amaddaProblemGetAllWikiDocumentId"
+            );
+
+            await amaddaProblemRequest(
+                "/problems/get-all", "POST",
+                { user_id, subject_id, wiki_document_id },
+                "amaddaProblemGetAllResult"
+            );
+        }
+
+        async function amaddaProblemGetAllUserAnswers() {
+            const user_id = document.getElementById("amaddaProblemAnswersUserId").value.trim();
+            const subject_id = document.getElementById("amaddaProblemAnswersSubjectId").value.trim();
+            const wiki_document_id = document.getElementById("amaddaProblemAnswersWikiDocumentId").value.trim();
+
+            if (!user_id || !subject_id || !wiki_document_id) {
+                document.getElementById("amaddaProblemAnswersResult").textContent = "사용자 ID, 과목 ID, 위키 문서 ID를 모두 입력해 주세요.";
+                return;
+            }
+
+            amaddaProblemSyncCommonFields(
+                "amaddaProblemAnswersUserId",
+                "amaddaProblemAnswersSubjectId",
+                "amaddaProblemAnswersWikiDocumentId"
+            );
+
+            await amaddaProblemRequest(
+                "/problems/get-all-user-answers", "POST",
+                { user_id, subject_id, wiki_document_id },
+                "amaddaProblemAnswersResult"
+            );
+        }
+
+        async function amaddaProblemUpdateUserAnswer() {
+            const user_id = document.getElementById("amaddaProblemUpdateAnswerUserId").value.trim();
+            const subject_id = document.getElementById("amaddaProblemUpdateAnswerSubjectId").value.trim();
+            const user_answer_id = document.getElementById("amaddaProblemUpdateAnswerId").value.trim();
+            const newDatasText = document.getElementById("amaddaProblemUpdateAnswerNewDatas").value.trim();
+            const resultElement = document.getElementById("amaddaProblemUpdateAnswerResult");
+
+            if (!user_id || !subject_id || !user_answer_id) {
+                resultElement.textContent = "사용자 ID, 과목 ID, 사용자 답변 ID를 모두 입력해 주세요.";
+                return;
+            }
+            if (!newDatasText) {
+                resultElement.textContent = "수정할 데이터를 JSON 형식으로 입력해 주세요.";
+                return;
+            }
+
+            let new_datas;
+            try {
+                new_datas = JSON.parse(newDatasText);
+            } catch (error) {
+                resultElement.textContent = "JSON 형식이 올바르지 않습니다: " + error.message;
+                return;
+            }
+
+            if (!new_datas || typeof new_datas !== "object" || Array.isArray(new_datas)) {
+                resultElement.textContent = "수정할 데이터는 JSON 객체여야 합니다. 예: {\"user_answer\":\"수정한 답변\"}";
+                return;
+            }
+
+            await amaddaProblemRequest(
+                "/problems/user-answers/update", "PATCH",
+                { user_id, subject_id, user_answer_id, new_datas },
+                "amaddaProblemUpdateAnswerResult"
+            );
+        }
+
+        async function amaddaProblemDelete() {
+            const user_id = document.getElementById("amaddaProblemDeleteUserId").value.trim();
+            const subject_id = document.getElementById("amaddaProblemDeleteSubjectId").value.trim();
+            const problem_id = document.getElementById("amaddaProblemDeleteProblemId").value.trim();
+
+            if (!user_id || !subject_id || !problem_id) {
+                document.getElementById("amaddaProblemDeleteResult").textContent = "사용자 ID, 과목 ID, 문제 ID를 모두 입력해 주세요.";
+                return;
+            }
+
+            if (!confirm("정말로 이 문제를 삭제하시겠습니까?")) return;
+
+            await amaddaProblemRequest(
+                "/problems/delete", "DELETE",
+                { user_id, subject_id, problem_id },
+                "amaddaProblemDeleteResult"
+            );
+        }
+    </script>
+</body>
+</html>

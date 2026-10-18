@@ -43,7 +43,7 @@ from AmaddaBackend.problem_generator import ProblemGenerator
 
 from AmaddaBackend.amadda_user_account_controller import AmaddaUserAccountController
 
-# from AmaddaBackend.amadda_subject_controller import SubjectController
+from AmaddaBackend.amadda_subject_controller import AmaddaSubjectController
 from AmaddaBackend.amadda_llmwiki_controller import AmaddaLLMWikiController
 from AmaddaBackend.amadda_problem_controller import AmaddaProblemController
 
@@ -77,7 +77,7 @@ amadda_user_account_controller = AmaddaUserAccountController(
     firebase_signup_and_login=firebase_signup_and_login,
     amadda_element_manager=amadda_element_manager,
 )
-# amadda_subject_controller = AmaddaSubjectController()
+amadda_subject_controller = AmaddaSubjectController(amadda_element_manager)
 amadda_llm_wiki_controller = AmaddaLLMWikiController(
     amadda_element_manager, lecture_material_text_extracter
 )
@@ -213,6 +213,97 @@ async def delete_unvalid_emails_uid(request: DeleteUnverifiedUsersRequest):
 # =========================================================
 ## AmaddaSubjectController
 # =========================================================
+
+from typing import Any
+from pydantic import BaseModel
+
+
+# 1. 사용자의 모든 과목 조회
+class GetUserSubjectsRequest(BaseModel):
+    user_id: str
+
+
+@app.post("/subjects/get-all")
+async def get_user_subjects(request: GetUserSubjectsRequest):
+    try:
+        subjects = await amadda_subject_controller.get_user_subjects(
+            user_id=request.user_id,
+        )
+
+        return success_response(
+            "사용자의 전체 과목 조회가 완료되었습니다.",
+            data={"subjects": subjects},
+        )
+
+    except Exception as error:
+        return error_response(error)
+
+
+# 2. 과목 생성
+class CreateSubjectRequest(BaseModel):
+    user_id: str
+
+
+@app.post("/subjects/create")
+async def create_subject(request: CreateSubjectRequest):
+    try:
+        subject = await amadda_subject_controller.create_subject(
+            user_id=request.user_id,
+        )
+
+        return success_response(
+            "과목 생성이 완료되었습니다.",
+            data={"subject": subject},
+        )
+
+    except Exception as error:
+        return error_response(error)
+
+
+# 3. 과목 정보 수정
+class UpdateSubjectRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    new_datas: dict[str, Any]
+
+
+@app.patch("/subjects/update")
+async def update_subject(request: UpdateSubjectRequest):
+    try:
+        await amadda_subject_controller.update_subject(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            new_datas=request.new_datas,
+        )
+
+        return success_response(
+            "과목 정보 수정이 완료되었습니다.",
+        )
+
+    except Exception as error:
+        return error_response(error)
+
+
+# 4. 과목 삭제
+class DeleteSubjectRequest(BaseModel):
+    user_id: str
+    subject_id: str
+
+
+@app.delete("/subjects/delete")
+async def delete_subject(request: DeleteSubjectRequest):
+    try:
+        await amadda_subject_controller.delete_subject(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+        )
+
+        return success_response(
+            "과목 삭제가 완료되었습니다.",
+        )
+
+    except Exception as error:
+        return error_response(error)
 
 
 # =========================================================
@@ -575,4 +666,13 @@ async def delete_problem(request: DeleteProblemRequest):
 # =========================================================
 @app.get("/")
 async def index():
-    return FileResponse("AmaddaBackend/index.html")
+    way = 4
+    
+    if(way == 1):
+        return FileResponse("./AmaddaFrontend/AmaddaUserAccountController.html")
+    elif(way == 2):
+        return FileResponse("./AmaddaFrontend/AmaddaSubjectController.html")
+    elif(way == 3):
+        return FileResponse("./AmaddaFrontend/AmaddaLLMWikiController.html")
+    elif(way == 4):
+        return FileResponse("./AmaddaFrontend/AmaddaProblemController.html")

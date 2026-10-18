@@ -60,6 +60,110 @@
 
 
     <!-- ================================================== -->
+    <!-- 과목 관리 API 테스트 -->
+    <!-- ================================================== -->
+
+    <hr>
+    <h1>과목 관리 API 테스트</h1>
+
+    <!-- 공통 설정 -->
+    <h2>공통 설정</h2>
+
+    <p>
+        API 기본 주소:
+        <br>
+        <input id="subjectApiBaseUrl" type="text" value="http://127.0.0.1:8000" size="50">
+    </p>
+
+    <p>
+        사용자 ID:
+        <br>
+        <input id="subjectUserId" type="text" placeholder="user_id 입력" size="50">
+    </p>
+
+
+    <!-- 1. 전체 과목 조회 -->
+    <hr>
+    <h2>1. 사용자의 전체 과목 조회</h2>
+
+    <p>
+        사용자의 모든 과목 정보를 조회합니다.
+    </p>
+
+    <button onclick="getUserSubjects()">
+        전체 과목 조회 요청
+    </button>
+
+
+    <!-- 2. 과목 생성 -->
+    <hr>
+    <h2>2. 과목 생성</h2>
+
+    <p>
+        새로운 과목을 생성합니다.
+    </p>
+
+    <button onclick="createSubject()">
+        과목 생성 요청
+    </button>
+
+
+    <!-- 3. 과목 정보 수정 -->
+    <hr>
+    <h2>3. 과목 정보 수정</h2>
+
+    <p>
+        과목 ID:
+        <br>
+        <input id="updateSubjectId" type="text" placeholder="수정할 subject_id" size="50">
+    </p>
+
+    <p>
+        수정할 데이터 (JSON):
+        <br>
+        <small>
+            subject_name: 과목 이름<br>
+            subject_number: 과목 번호<br>
+            변경할 항목만 입력할 수 있습니다.
+        </small>
+    </p>
+
+    <p>
+        <textarea id="updateSubjectDatas" rows="8" cols="60">{
+    "subject_name": "한국사",
+    "subject_number": 1
+}</textarea>
+    </p>
+
+    <button onclick="updateSubject()">
+        과목 정보 수정 요청
+    </button>
+
+
+    <!-- 4. 과목 삭제 -->
+    <hr>
+    <h2>4. 과목 삭제</h2>
+
+    <p>
+        과목 ID:
+        <br>
+        <input id="deleteSubjectId" type="text" placeholder="삭제할 subject_id" size="50">
+    </p>
+
+    <button onclick="deleteSubject()">
+        과목 삭제 요청
+    </button>
+
+
+    <!-- 응답 결과 -->
+    <hr>
+    <h2>응답 결과</h2>
+
+    <pre id="subjectApiResult">아직 요청하지 않았습니다.</pre>
+
+
+
+    <!-- ================================================== -->
     <!-- 강의자료 및 위키 기능 테스트 -->
     <!-- ================================================== -->
 
@@ -253,7 +357,6 @@
         function checkServer() {
             requestApi("/", "GET");
         }
-
 
         // =================================================
         // 강의자료 API 공통 입력 검증
@@ -465,6 +568,268 @@
     </script>
 
     <body>
+        <script>
+
+            /**
+             * 공통 입력값 확인
+             */
+            function getSubjectApiCommonData() {
+                const apiBaseUrl = document
+                    .getElementById("subjectApiBaseUrl")
+                    .value
+                    .trim()
+                    .replace(/\/+$/, "");
+
+                const userId = document
+                    .getElementById("subjectUserId")
+                    .value
+                    .trim();
+
+                if (!apiBaseUrl) {
+                    alert("API 기본 주소를 입력하세요.");
+                    return null;
+                }
+
+                if (!userId) {
+                    alert("사용자 ID를 입력하세요.");
+                    return null;
+                }
+
+                return {
+                    apiBaseUrl,
+                    userId
+                };
+            }
+
+
+            /**
+             * 공통 결과 표시
+             */
+            function showSubjectApiResult(data) {
+                const resultElement = document.getElementById("subjectApiResult");
+
+                resultElement.textContent =
+                    typeof data === "string"
+                        ? data
+                        : JSON.stringify(data, null, 2);
+            }
+
+
+            /**
+             * 공통 API 요청
+             */
+            async function requestSubjectApi(path, method, body) {
+                showSubjectApiResult("요청 중...");
+
+                try {
+                    const options = {
+                        method,
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    };
+
+                    if (body !== undefined) {
+                        options.body = JSON.stringify(body);
+                    }
+
+                    const common = getSubjectApiCommonData();
+
+                    if (!common) {
+                        showSubjectApiResult("입력값을 확인하세요.");
+                        return null;
+                    }
+
+                    const response = await fetch(
+                        `${common.apiBaseUrl}${path}`,
+                        options
+                    );
+
+                    const responseText = await response.text();
+                    let responseData;
+
+                    try {
+                        responseData = responseText
+                            ? JSON.parse(responseText)
+                            : null;
+                    } catch {
+                        responseData = responseText;
+                    }
+
+                    const result = {
+                        http_status: response.status,
+                        http_ok: response.ok,
+                        response: responseData
+                    };
+
+                    showSubjectApiResult(result);
+                    return result;
+
+                } catch (error) {
+                    showSubjectApiResult({
+                        error: error.message,
+                        hint: "서버 실행 여부, API 주소 및 CORS 설정을 확인하세요."
+                    });
+
+                    return null;
+                }
+            }
+
+
+            /**
+             * 1. 전체 과목 조회
+             * POST /subjects/get-all
+             */
+            async function getUserSubjects() {
+                const common = getSubjectApiCommonData();
+
+                if (!common) return;
+
+                await requestSubjectApi(
+                    "/subjects/get-all",
+                    "POST",
+                    {
+                        user_id: common.userId
+                    }
+                );
+            }
+
+
+            /**
+             * 2. 과목 생성
+             * POST /subjects/create
+             */
+            async function createSubject() {
+                const common = getSubjectApiCommonData();
+
+                if (!common) return;
+
+                if (!confirm("새로운 과목을 생성하시겠습니까?")) {
+                    return;
+                }
+
+                await requestSubjectApi(
+                    "/subjects/create",
+                    "POST",
+                    {
+                        user_id: common.userId
+                    }
+                );
+            }
+
+
+            /**
+             * 3. 과목 정보 수정
+             * PATCH /subjects/update
+             */
+            async function updateSubject() {
+                const common = getSubjectApiCommonData();
+
+                if (!common) return;
+
+                const subjectId = document
+                    .getElementById("updateSubjectId")
+                    .value
+                    .trim();
+
+                if (!subjectId) {
+                    alert("수정할 과목 ID를 입력하세요.");
+                    return;
+                }
+
+                let newDatas;
+
+                try {
+                    newDatas = JSON.parse(
+                        document.getElementById("updateSubjectDatas").value
+                    );
+                } catch {
+                    alert("수정할 데이터가 올바른 JSON 형식이 아닙니다.");
+                    return;
+                }
+
+                if (
+                    newDatas === null ||
+                    typeof newDatas !== "object" ||
+                    Array.isArray(newDatas)
+                ) {
+                    alert("수정할 데이터는 JSON 객체여야 합니다.");
+                    return;
+                }
+
+                const allowedKeys = ["subject_name", "subject_number"];
+
+                const invalidKeys = Object.keys(newDatas).filter(
+                    key => !allowedKeys.includes(key)
+                );
+
+                if (invalidKeys.length > 0) {
+                    alert(
+                        "허용되지 않은 필드입니다: " +
+                        invalidKeys.join(", ")
+                    );
+                    return;
+                }
+
+                if (Object.keys(newDatas).length === 0) {
+                    alert("수정할 항목을 입력하세요.");
+                    return;
+                }
+
+                await requestSubjectApi(
+                    "/subjects/update",
+                    "PATCH",
+                    {
+                        user_id: common.userId,
+                        subject_id: subjectId,
+                        new_datas: newDatas
+                    }
+                );
+            }
+
+
+            /**
+             * 4. 과목 삭제
+             * DELETE /subjects/delete
+             */
+            async function deleteSubject() {
+                const common = getSubjectApiCommonData();
+
+                if (!common) return;
+
+                const subjectId = document
+                    .getElementById("deleteSubjectId")
+                    .value
+                    .trim();
+
+                if (!subjectId) {
+                    alert("삭제할 과목 ID를 입력하세요.");
+                    return;
+                }
+
+                if (
+                    !confirm(
+                        `과목 ID "${subjectId}"를 삭제하시겠습니까?\n` +
+                        "실제 데이터가 삭제될 수 있습니다."
+                    )
+                ) {
+                    return;
+                }
+
+                await requestSubjectApi(
+                    "/subjects/delete",
+                    "DELETE",
+                    {
+                        user_id: common.userId,
+                        subject_id: subjectId
+                    }
+                );
+            }
+
+        </script>
+    </body>
+
+    <body>
         <div class="container">
             <h1>Amadda 문제 관리 API 테스트</h1>
             <p class="description">
@@ -491,7 +856,8 @@
 
                     <div>
                         <label for="wikiDocumentId">위키 문서 ID</label>
-                        <input id="wikiDocumentId" placeholder="wiki_document_id" value="918fe0d1-b819-42c0-a4f2-d97f85b34c3a">
+                        <input id="wikiDocumentId" placeholder="wiki_document_id"
+                            value="918fe0d1-b819-42c0-a4f2-d97f85b34c3a">
                     </div>
 
                     <div>

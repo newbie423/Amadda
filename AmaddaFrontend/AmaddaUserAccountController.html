@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmaddaUserAccountController</title>
+</head>
+<body>
+    <h1>Amadda 사용자 계정 API 테스트</h1>
+
+    <p>
+        <label for="amaddaUserAccountApiBaseUrl">FastAPI 기본 주소:</label>
+        <input id="amaddaUserAccountApiBaseUrl" type="text" value="http://127.0.0.1:8000">
+    </p>
+    <p>각 기능은 이 페이지의 JavaScript만 사용하며, CSS와 외부 라이브러리는 사용하지 않습니다.</p>
+
+    <hr>
+
+    <section>
+        <h2>1. 회원가입</h2>
+        <p><label for="amaddaSignupEmail">이메일:</label>
+            <input id="amaddaSignupEmail" type="email" autocomplete="email"></p>
+        <p><label for="amaddaSignupPassword">비밀번호:</label>
+            <input id="amaddaSignupPassword" type="password" autocomplete="new-password"></p>
+        <p><label for="amaddaSignupPasswordCheck">비밀번호 확인:</label>
+            <input id="amaddaSignupPasswordCheck" type="password" autocomplete="new-password"></p>
+        <button type="button" onclick="amaddaUserAccountSignup()">회원가입 요청</button>
+        <pre id="amaddaSignupResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>2. 로그인</h2>
+        <p><label for="amaddaLoginEmail">이메일:</label>
+            <input id="amaddaLoginEmail" type="email" autocomplete="username"></p>
+        <p><label for="amaddaLoginPassword">비밀번호:</label>
+            <input id="amaddaLoginPassword" type="password" autocomplete="current-password"></p>
+        <button type="button" onclick="amaddaUserAccountLogin()">로그인 요청</button>
+        <pre id="amaddaLoginResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>3. 이메일 인증 메시지 재전송</h2>
+        <p><label for="amaddaResendVerificationEmail">이메일:</label>
+            <input id="amaddaResendVerificationEmail" type="email" autocomplete="email"></p>
+        <button type="button" onclick="amaddaUserAccountResendVerification()">인증 메시지 재전송</button>
+        <pre id="amaddaResendVerificationResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>4. 로그아웃</h2>
+        <p><label for="amaddaLogoutUserId">사용자 ID:</label>
+            <input id="amaddaLogoutUserId" type="text"></p>
+        <button type="button" onclick="amaddaUserAccountLogout()">로그아웃 요청</button>
+        <pre id="amaddaLogoutResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>5. 회원탈퇴</h2>
+        <p><label for="amaddaDeleteUserId">사용자 ID:</label>
+            <input id="amaddaDeleteUserId" type="text"></p>
+        <button type="button" onclick="amaddaUserAccountDelete()">회원탈퇴 요청</button>
+        <pre id="amaddaDeleteUserResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>6. 미인증 계정 삭제</h2>
+        <p>
+            <label for="amaddaDeleteUnverifiedElapsedSecond">경과 시간(초):</label>
+            <input id="amaddaDeleteUnverifiedElapsedSecond" type="number" min="0" step="any" value="300">
+        </p>
+        <p>기본값은 300초(5분)입니다. 이 요청은 조건에 맞는 미인증 계정을 실제로 삭제할 수 있으므로 주의해서 실행하세요.</p>
+        <button type="button" onclick="amaddaUserAccountDeleteUnverified()">미인증 계정 정리 요청</button>
+        <pre id="amaddaDeleteUnverifiedResult" aria-live="polite"></pre>
+    </section>
+
+    <script>
+        async function amaddaUserAccountRequest(path, method, payload, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            const baseUrl = document.getElementById("amaddaUserAccountApiBaseUrl").value.trim().replace(/\/+$/, "");
+
+            if (!baseUrl) {
+                resultElement.textContent = "오류: FastAPI 기본 주소를 입력해 주세요.";
+                return;
+            }
+
+            resultElement.textContent = "요청 중...";
+
+            try {
+                const response = await fetch(baseUrl + path, {
+                    method: method,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: payload === null ? undefined : JSON.stringify(payload)
+                });
+
+                const responseText = await response.text();
+                let responseData;
+
+                try {
+                    responseData = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    responseData = { raw_response: responseText };
+                }
+
+                resultElement.textContent =
+                    "HTTP 상태 코드: " + response.status + " " + response.statusText + "\n" +
+                    JSON.stringify(responseData, null, 2);
+
+                return { ok: response.ok, data: responseData };
+            } catch (error) {
+                resultElement.textContent =
+                    "요청 실패: " + error.message +
+                    "\nFastAPI 서버가 실행 중인지, 기본 주소가 맞는지, CORS 설정이 되어 있는지 확인해 주세요.";
+                return null;
+            }
+        }
+
+        async function amaddaUserAccountSignup() {
+            const email = document.getElementById("amaddaSignupEmail").value.trim();
+            const password = document.getElementById("amaddaSignupPassword").value;
+            const password_check = document.getElementById("amaddaSignupPasswordCheck").value;
+
+            if (!email || !password || !password_check) {
+                document.getElementById("amaddaSignupResult").textContent = "이메일과 비밀번호 입력란을 모두 채워 주세요.";
+                return;
+            }
+
+            await amaddaUserAccountRequest(
+                "/users/signup", "POST",
+                { email, password, password_check },
+                "amaddaSignupResult"
+            );
+        }
+
+        async function amaddaUserAccountLogin() {
+            const email = document.getElementById("amaddaLoginEmail").value.trim();
+            const password = document.getElementById("amaddaLoginPassword").value;
+
+            if (!email || !password) {
+                document.getElementById("amaddaLoginResult").textContent = "이메일과 비밀번호를 입력해 주세요.";
+                return;
+            }
+
+            const result = await amaddaUserAccountRequest(
+                "/users/login", "POST",
+                { email, password },
+                "amaddaLoginResult"
+            );
+
+            const userId = result && result.data && result.data.data
+                ? result.data.data.user_id
+                : null;
+
+            if (result && result.ok && userId) {
+                document.getElementById("amaddaLogoutUserId").value = userId;
+                document.getElementById("amaddaDeleteUserId").value = userId;
+            }
+        }
+
+        async function amaddaUserAccountResendVerification() {
+            const email = document.getElementById("amaddaResendVerificationEmail").value.trim();
+
+            if (!email) {
+                document.getElementById("amaddaResendVerificationResult").textContent = "이메일을 입력해 주세요.";
+                return;
+            }
+
+            await amaddaUserAccountRequest(
+                "/users/resend-email-verification", "POST",
+                { email },
+                "amaddaResendVerificationResult"
+            );
+        }
+
+        async function amaddaUserAccountLogout() {
+            const user_id = document.getElementById("amaddaLogoutUserId").value.trim();
+
+            if (!user_id) {
+                document.getElementById("amaddaLogoutResult").textContent = "사용자 ID를 입력하거나 로그인해 주세요.";
+                return;
+            }
+
+            await amaddaUserAccountRequest(
+                "/users/logout", "POST",
+                { user_id },
+                "amaddaLogoutResult"
+            );
+        }
+
+        async function amaddaUserAccountDelete() {
+            const user_id = document.getElementById("amaddaDeleteUserId").value.trim();
+
+            if (!user_id) {
+                document.getElementById("amaddaDeleteUserResult").textContent = "사용자 ID를 입력하거나 로그인해 주세요.";
+                return;
+            }
+
+            if (!confirm("정말로 이 사용자 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없을 수 있습니다.")) {
+                return;
+            }
+
+            await amaddaUserAccountRequest(
+                "/users/delete", "DELETE",
+                { user_id },
+                "amaddaDeleteUserResult"
+            );
+        }
+
+        async function amaddaUserAccountDeleteUnverified() {
+            const elapsedValue = document.getElementById("amaddaDeleteUnverifiedElapsedSecond").value;
+            const elapsed_second = Number(elapsedValue);
+
+            if (elapsedValue.trim() === "" || !Number.isFinite(elapsed_second) || elapsed_second < 0) {
+                document.getElementById("amaddaDeleteUnverifiedResult").textContent = "경과 시간은 0 이상의 숫자로 입력해 주세요.";
+                return;
+            }
+
+            if (!confirm("설정한 경과 시간보다 오래된 미인증 계정이 삭제될 수 있습니다. 계속하시겠습니까?")) {
+                return;
+            }
+
+            await amaddaUserAccountRequest(
+                "/users/delete-unverified", "POST",
+                { elapsed_second },
+                "amaddaDeleteUnverifiedResult"
+            );
+        }
+    </script>
+</body>
+</html>

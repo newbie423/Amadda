@@ -88,7 +88,7 @@ class AmaddaProblemController:
                 problem_correct_answer=created_problem["problem_correct_answer"],
                 problem_options=created_problem["problem_options"]
             )
-        self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = True
+        self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = False
         
     def is_problem_creating(self, user_id:str, subject_id:str, wiki_document_id:str) -> bool:
         '''
@@ -121,22 +121,27 @@ class AmaddaProblemController:
         '''
 
         # 문제를 가져옴(없다면 에러가 발생)
-        problem = await self.__amadda_element_manager.get_problem(user_id, subject_id, problem_id)
+        delete_problem = await self.__amadda_element_manager.get_problem(user_id, subject_id, problem_id)
 
         # 가져온 문제의 소유 위키 문서를 토대로 다른 모든 문제들도 가져옴(위의 코드에서 에러가 발생하지 않으면 마찬가지로 발생하지 않음)
-        all_problems = await self.__amadda_element_manager.get_wiki_document_problems(user_id, subject_id, problem["owner_wiki_document_id"])
+        all_problems = await self.__amadda_element_manager.get_wiki_document_problems(user_id, subject_id, delete_problem["owner_wiki_document_id"])
 
         # 삭제할 문제의 번호
-        delete_problem_number = problem["problem_number"]
-        
-        await self.__amadda_element_manager.delete_problem(user_id, subject_id, problem["problem_id"])
+        delete_problem_number = delete_problem["problem_number"]
 
         # 삭제한 문제의 번호보다 높은 번호를 가진 모든 문제의 번호를 -1하기
-        for problem in all_problems:
-            if(problem["problem_number"] > delete_problem_number):
-                await self.__amadda_element_manager.update_problem(user_id, subject_id, problem["problem_id"], {
-                    "problem_number":problem["problem_number"] - 1
+        for idx in range(len(all_problems)):
+            now_problem = all_problems[idx]
+            now_problem_id = now_problem["problem_id"]
+            now_problem_number = now_problem["problem_number"]
+            
+            if(now_problem_number > delete_problem_number):
+                await self.__amadda_element_manager.update_problem(user_id, subject_id, now_problem_id, {
+                    "problem_number" : now_problem_number - 1
                 })
+
+        # 문제를 삭제하기
+        await self.__amadda_element_manager.delete_problem(user_id, subject_id, delete_problem["problem_id"])
 
 # For Test code
 def get_amddda_element_manager():

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmaddaLLMWikiController</title>
+</head>
+<body>
+    <h1>Amadda 강의자료 및 위키 API 테스트</h1>
+
+    <p>
+        <label for="amaddaWikiApiBaseUrl">FastAPI 기본 주소:</label>
+        <input id="amaddaWikiApiBaseUrl" type="text" value="http://127.0.0.1:8000">
+    </p>
+    <p>파일 업로드는 파일별 형식을 선택한 뒤 전송합니다. 지원 형식과 서버의 파일 형식 값이 일치하는지 확인해 주세요.</p>
+
+    <hr>
+
+    <section>
+        <h2>1. 강의자료 파일 업로드</h2>
+        <p>
+            <label for="amaddaWikiFileUploadUserId">사용자 ID:</label>
+            <input id="amaddaWikiFileUploadUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiFileUploadSubjectId">과목 ID:</label>
+            <input id="amaddaWikiFileUploadSubjectId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiLectureFiles">강의자료 파일 선택 (여러 파일 가능):</label>
+            <input id="amaddaWikiLectureFiles" type="file" multiple>
+        </p>
+        <p>파일 형식은 각 파일마다 선택하세요.</p>
+        <div id="amaddaWikiFileTypeFields"></div>
+        <button type="button" onclick="amaddaWikiBuildFileTypeFields()">파일 형식 선택란 갱신</button>
+        <button type="button" onclick="amaddaWikiUploadFiles()">파일 업로드</button>
+        <pre id="amaddaWikiFileUploadResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>2. URL을 통한 강의자료 업로드</h2>
+        <p>
+            <label for="amaddaWikiUrlUploadUserId">사용자 ID:</label>
+            <input id="amaddaWikiUrlUploadUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiUrlUploadSubjectId">과목 ID:</label>
+            <input id="amaddaWikiUrlUploadSubjectId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiLectureUrls">강의자료 URL (한 줄에 하나씩):</label><br>
+            <textarea id="amaddaWikiLectureUrls" rows="5" cols="60" placeholder="https://example.com/lecture"></textarea>
+        </p>
+        <button type="button" onclick="amaddaWikiUploadUrls()">URL 업로드 요청</button>
+        <pre id="amaddaWikiUrlUploadResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>3. 강의자료 업로드 진행 상태 확인</h2>
+        <p>
+            <label for="amaddaWikiUploadingUserId">사용자 ID:</label>
+            <input id="amaddaWikiUploadingUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiUploadingSubjectId">과목 ID:</label>
+            <input id="amaddaWikiUploadingSubjectId" type="text">
+        </p>
+        <button type="button" onclick="amaddaWikiCheckUploading()">업로드 상태 확인</button>
+        <pre id="amaddaWikiUploadingResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>4. 업로드한 강의자료 요약</h2>
+        <p>
+            <label for="amaddaWikiSummarizeUserId">사용자 ID:</label>
+            <input id="amaddaWikiSummarizeUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiSummarizeSubjectId">과목 ID:</label>
+            <input id="amaddaWikiSummarizeSubjectId" type="text">
+        </p>
+        <button type="button" onclick="amaddaWikiSummarize()">강의자료 요약 실행</button>
+        <pre id="amaddaWikiSummarizeResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>5. 강의자료 요약 완료 상태 확인</h2>
+        <p>
+            <label for="amaddaWikiSummarizedUserId">사용자 ID:</label>
+            <input id="amaddaWikiSummarizedUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiSummarizedSubjectId">과목 ID:</label>
+            <input id="amaddaWikiSummarizedSubjectId" type="text">
+        </p>
+        <button type="button" onclick="amaddaWikiCheckSummarized()">요약 상태 확인</button>
+        <pre id="amaddaWikiSummarizedResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>6. 과목의 전체 위키 문서 조회</h2>
+        <p>
+            <label for="amaddaWikiDocumentsUserId">사용자 ID:</label>
+            <input id="amaddaWikiDocumentsUserId" type="text">
+        </p>
+        <p>
+            <label for="amaddaWikiDocumentsSubjectId">과목 ID:</label>
+            <input id="amaddaWikiDocumentsSubjectId" type="text">
+        </p>
+        <button type="button" onclick="amaddaWikiGetAllDocuments()">위키 문서 조회</button>
+        <pre id="amaddaWikiDocumentsResult" aria-live="polite"></pre>
+    </section>
+
+    <script>
+        async function amaddaWikiRequest(path, method, payload, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            const baseUrl = document.getElementById("amaddaWikiApiBaseUrl").value.trim().replace(/\/+$/, "");
+
+            if (!baseUrl) {
+                resultElement.textContent = "오류: FastAPI 기본 주소를 입력해 주세요.";
+                return null;
+            }
+
+            resultElement.textContent = "요청 중...";
+
+            try {
+                const options = { method: method, headers: {} };
+
+                if (payload instanceof FormData) {
+                    options.body = payload;
+                } else if (payload !== null) {
+                    options.headers["Content-Type"] = "application/json";
+                    options.body = JSON.stringify(payload);
+                }
+
+                const response = await fetch(baseUrl + path, options);
+                const responseText = await response.text();
+                let responseData;
+
+                try {
+                    responseData = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    responseData = { raw_response: responseText };
+                }
+
+                resultElement.textContent =
+                    "HTTP 상태 코드: " + response.status + " " + response.statusText + "\n" +
+                    JSON.stringify(responseData, null, 2);
+
+                return { ok: response.ok, data: responseData };
+            } catch (error) {
+                resultElement.textContent =
+                    "요청 실패: " + error.message +
+                    "\nFastAPI 서버 실행 여부, 기본 주소, CORS 설정을 확인해 주세요.";
+                return null;
+            }
+        }
+
+        function amaddaWikiSyncCommonFields(sourceUserId, sourceSubjectId) {
+            const userId = document.getElementById(sourceUserId).value.trim();
+            const subjectId = document.getElementById(sourceSubjectId).value.trim();
+
+            const pairs = [
+                ["amaddaWikiFileUploadUserId", "amaddaWikiFileUploadSubjectId"],
+                ["amaddaWikiUrlUploadUserId", "amaddaWikiUrlUploadSubjectId"],
+                ["amaddaWikiUploadingUserId", "amaddaWikiUploadingSubjectId"],
+                ["amaddaWikiSummarizeUserId", "amaddaWikiSummarizeSubjectId"],
+                ["amaddaWikiSummarizedUserId", "amaddaWikiSummarizedSubjectId"],
+                ["amaddaWikiDocumentsUserId", "amaddaWikiDocumentsSubjectId"]
+            ];
+
+            for (const pair of pairs) {
+                document.getElementById(pair[0]).value = userId;
+                document.getElementById(pair[1]).value = subjectId;
+            }
+        }
+
+        function amaddaWikiBuildFileTypeFields() {
+            const fileInput = document.getElementById("amaddaWikiLectureFiles");
+            const container = document.getElementById("amaddaWikiFileTypeFields");
+            const files = Array.from(fileInput.files || []);
+            container.replaceChildren();
+
+            if (files.length === 0) {
+                container.textContent = "먼저 파일을 선택해 주세요.";
+                return;
+            }
+
+            files.forEach((file, index) => {
+                const row = document.createElement("p");
+                const label = document.createElement("label");
+                const select = document.createElement("select");
+                const selectId = "amaddaWikiFileType_" + index;
+
+                label.htmlFor = selectId;
+                label.textContent = file.name + " 형식: ";
+
+                select.id = selectId;
+                select.dataset.fileIndex = String(index);
+
+                const options = [
+                    ["pdf", "PDF"],
+                    ["mp3", "MP3 오디오"],
+                    ["mp4", "MP4 비디오"]
+                ];
+
+                options.forEach(([value, text]) => {
+                    const option = document.createElement("option");
+                    option.value = value;
+                    option.textContent = text;
+                    select.appendChild(option);
+                });
+
+                const lowerName = file.name.toLowerCase();
+                if (lowerName.endsWith(".pdf")) select.value = "pdf";
+                else if (lowerName.endsWith(".mp3")) select.value = "mp3";
+                else if (lowerName.endsWith(".mp4")) select.value = "mp4";
+
+                row.append(label, select);
+                container.appendChild(row);
+            });
+        }
+
+        document.getElementById("amaddaWikiLectureFiles").addEventListener("change", amaddaWikiBuildFileTypeFields);
+
+        async function amaddaWikiUploadFiles() {
+            const user_id = document.getElementById("amaddaWikiFileUploadUserId").value.trim();
+            const subject_id = document.getElementById("amaddaWikiFileUploadSubjectId").value.trim();
+            const files = Array.from(document.getElementById("amaddaWikiLectureFiles").files || []);
+            const resultElement = document.getElementById("amaddaWikiFileUploadResult");
+
+            if (!user_id || !subject_id) {
+                resultElement.textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+            if (files.length === 0) {
+                resultElement.textContent = "업로드할 파일을 하나 이상 선택해 주세요.";
+                return;
+            }
+
+            const selects = Array.from(document.querySelectorAll("#amaddaWikiFileTypeFields select"));
+            if (selects.length !== files.length) {
+                resultElement.textContent = "파일 형식 선택란을 갱신해 주세요.";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("user_id", user_id);
+            formData.append("subject_id", subject_id);
+
+            files.forEach((file, index) => {
+                formData.append("files", file);
+                formData.append("file_types", selects[index].value);
+            });
+
+            amaddaWikiSyncCommonFields("amaddaWikiFileUploadUserId", "amaddaWikiFileUploadSubjectId");
+            await amaddaWikiRequest(
+                "/lecture-materials/upload", "POST",
+                formData,
+                "amaddaWikiFileUploadResult"
+            );
+        }
+
+        async function amaddaWikiUploadUrls() {
+            const user_id = document.getElementById("amaddaWikiUrlUploadUserId").value.trim();
+            const subject_id = document.getElementById("amaddaWikiUrlUploadSubjectId").value.trim();
+            const urls = document.getElementById("amaddaWikiLectureUrls").value
+                .split(/\r?\n/)
+                .map(url => url.trim())
+                .filter(Boolean);
+
+            if (!user_id || !subject_id) {
+                document.getElementById("amaddaWikiUrlUploadResult").textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+            if (urls.length === 0) {
+                document.getElementById("amaddaWikiUrlUploadResult").textContent = "URL을 한 개 이상 입력해 주세요.";
+                return;
+            }
+
+            amaddaWikiSyncCommonFields("amaddaWikiUrlUploadUserId", "amaddaWikiUrlUploadSubjectId");
+            await amaddaWikiRequest(
+                "/lecture-materials/upload-urls", "POST",
+                { user_id, subject_id, urls },
+                "amaddaWikiUrlUploadResult"
+            );
+        }
+
+        async function amaddaWikiCheckUploading() {
+            const user_id = document.getElementById("amaddaWikiUploadingUserId").value.trim();
+            const subject_id = document.getElementById("amaddaWikiUploadingSubjectId").value.trim();
+
+            if (!user_id || !subject_id) {
+                document.getElementById("amaddaWikiUploadingResult").textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+
+            amaddaWikiSyncCommonFields("amaddaWikiUploadingUserId", "amaddaWikiUploadingSubjectId");
+            await amaddaWikiRequest(
+                "/lecture-materials/is-uploading", "POST",
+                { user_id, subject_id },
+                "amaddaWikiUploadingResult"
+            );
+        }
+
+        async function amaddaWikiSummarize() {
+            const user_id = document.getElementById("amaddaWikiSummarizeUserId").value.trim();
+            const subject_id = document.getElementById("amaddaWikiSummarizeSubjectId").value.trim();
+
+            if (!user_id || !subject_id) {
+                document.getElementById("amaddaWikiSummarizeResult").textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+
+            if (!confirm("이 과목에 업로드된 강의자료를 요약하시겠습니까?")) return;
+
+            amaddaWikiSyncCommonFields("amaddaWikiSummarizeUserId", "amaddaWikiSummarizeSubjectId");
+            await amaddaWikiRequest(
+                "/lecture-materials/summarize", "POST",
+                { user_id, subject_id },
+                "amaddaWikiSummarizeResult"
+            );
+        }
+
+        async function amaddaWikiCheckSummarized() {
+            const user_id = document.getElementById("amaddaWikiSummarizedUserId").value.trim();
+            const subject_id = document.getElementById("amaddaWikiSummarizedSubjectId").value.trim();
+
+            if (!user_id || !subject_id) {
+                document.getElementById("amaddaWikiSummarizedResult").textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+
+            amaddaWikiSyncCommonFields("amaddaWikiSummarizedUserId", "amaddaWikiSummarizedSubjectId");
+            await amaddaWikiRequest(
+                "/lecture-materials/is-summarized", "POST",
+                { user_id, subject_id },
+                "amaddaWikiSummarizedResult"
+            );
+        }
+
+        async function amaddaWikiGetAllDocuments() {
+            const user_id = document.getElementById("amaddaWikiDocumentsUserId").value.trim();
+            const subject_id = document.getElementById("amaddaWikiDocumentsSubjectId").value.trim();
+
+            if (!user_id || !subject_id) {
+                document.getElementById("amaddaWikiDocumentsResult").textContent = "사용자 ID와 과목 ID를 입력해 주세요.";
+                return;
+            }
+
+            amaddaWikiSyncCommonFields("amaddaWikiDocumentsUserId", "amaddaWikiDocumentsSubjectId");
+            await amaddaWikiRequest(
+                "/wiki-documents/get-all", "POST",
+                { user_id, subject_id },
+                "amaddaWikiDocumentsResult"
+            );
+        }
+    </script>
+</body>
+</html>
