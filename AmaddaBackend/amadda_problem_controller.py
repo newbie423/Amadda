@@ -63,8 +63,12 @@ class AmaddaProblemController:
 
         try:
             self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = True
+            # wiki_document_content 가져오기
+            wiki_document = self.__amadda_element_manager.get_wiki_document(user_id, subject_id, wiki_document_id)
+            wiki_document_content = wiki_document["wiki_document_content"]
+            
             # problem generator를 사용하여 문제를 생성하기
-            created_problems = self.__problem_generator.generate_problem(generate_rule, wiki_document_id, existing_problems)
+            created_problems = self.__problem_generator.generate_problem(generate_rule, wiki_document_content, existing_problems)
         except:
             self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = False
             raise ValueError("문제 생성에 실패하였습니다")
