@@ -61,11 +61,12 @@ class AmaddaProblemController:
 
         created_problems:list[dict, Any] = None
 
+        # wiki_document_content 가져오기
+        wiki_document = await self.__amadda_element_manager.get_wiki_document(user_id, subject_id, wiki_document_id)
+        wiki_document_content = wiki_document["wiki_document_content"]
+        
         try:
             self.__problem_generate_progress[(user_id, subject_id, wiki_document_id)] = True
-            # wiki_document_content 가져오기
-            wiki_document = self.__amadda_element_manager.get_wiki_document(user_id, subject_id, wiki_document_id)
-            wiki_document_content = wiki_document["wiki_document_content"]
             
             # problem generator를 사용하여 문제를 생성하기
             created_problems = self.__problem_generator.generate_problem(generate_rule, wiki_document_content, existing_problems)
