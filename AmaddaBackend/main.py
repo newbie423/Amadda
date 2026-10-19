@@ -666,7 +666,7 @@ async def delete_problem(request: DeleteProblemRequest):
 # =========================================================
 @app.get("/")
 async def index():
-    way = 4
+    way = 1
     
     if(way == 1):
         return FileResponse("./AmaddaFrontend/AmaddaUserAccountController.html")
