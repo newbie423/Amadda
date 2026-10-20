@@ -163,7 +163,7 @@ class AmaddaUserAccountController:
                 password:str = self.__pending_validate_emails[pending_validate_email]["password"]
                 login_data = self.__firebase_signup_and_login.login(pending_validate_email, password)
                 self.__pending_validate_emails.pop(pending_validate_email)
-                await self.__amadda_element_manager.delete_user(login_data["user_id"])
+                await self.user_delete(login_data["user_id"])
 
         self.__write_pending_validate_emails()
 
