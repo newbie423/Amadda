@@ -23,7 +23,6 @@ class AmaddaGradeController:
         """
         임의의 위키 문서 속 모든 문제들을 채점하는 기능
         """
-
         key = (user_id, subject_id, wiki_document_id)
 
         if self.is_problem_grading(user_id, subject_id, wiki_document_id):
