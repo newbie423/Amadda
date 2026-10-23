@@ -47,6 +47,8 @@ subject_id="ba607739-7fe2-44f9-a54c-87c346cf6384"
 wiki_document_id="fce0300e-f52f-477c-8a7f-ebf9330d9520"
 '''
 
+# for test
+
 test_grade_infos = [
     {
         "id": "90efd7f9-cb24-435c-8140-469a70ab9487",
@@ -97,3 +99,22 @@ test_grade_infos = [
         "user_answer": ""
     }
 ]
+
+def get_problem_grader():
+    import os
+    from dotenv import load_dotenv
+
+    ENV_PATH = "AmaddaBackend/.env"
+    load_dotenv(dotenv_path=ENV_PATH)
+
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+    return ProblemGrader(GEMINI_API_KEY)
+
+# test code
+
+def Test():
+    pg = get_problem_grader()
+
+if(__name__ == "__main__"):
+    Test()
