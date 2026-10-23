@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmaddaGradeController</title>
+</head>
+<body>
+    <h1>Amadda 채점 API 테스트</h1>
+
+    <p>
+        <label for="amaddaGradeApiBaseUrl">FastAPI 기본 주소:</label>
+        <input id="amaddaGradeApiBaseUrl" type="text" value="http://127.0.0.1:8000">
+    </p>
+    <p>각 기능은 이 페이지의 JavaScript만 사용하며, CSS와 외부 라이브러리는 사용하지 않습니다.</p>
+
+    <hr>
+
+    <section>
+        <h2>공통 입력값</h2>
+        <p><label for="amaddaGradeUserId">사용자 ID:</label>
+            <input id="amaddaGradeUserId" type="text"></p>
+        <p><label for="amaddaGradeSubjectId">과목 ID:</label>
+            <input id="amaddaGradeSubjectId" type="text"></p>
+        <p><label for="amaddaGradeWikiDocumentId">Wiki 문서 ID:</label>
+            <input id="amaddaGradeWikiDocumentId" type="text"></p>
+        <p>아래 세 기능은 이 공통 입력값을 사용합니다. 사용자, 과목, Wiki 문서 ID를 모두 입력해 주세요.</p>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>1. 문제 채점</h2>
+        <p>해당 Wiki 문서의 문제와 사용자 답안을 불러와 채점하고, 채점 결과를 저장합니다.</p>
+        <p>채점 작업이 실제로 실행되므로 동일 문서에 대해 중복 요청하지 않도록 주의하세요.</p>
+        <button type="button" onclick="amaddaGradeStart()">채점 요청</button>
+        <pre id="amaddaGradeStartResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>2. 채점 진행 상태 확인</h2>
+        <p><button type="button" onclick="amaddaGradeCheckProgress()">채점 상태 조회</button></p>
+        <pre id="amaddaGradeProgressResult" aria-live="polite"></pre>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>3. 전체 채점 결과 조회</h2>
+        <p><button type="button" onclick="amaddaGradeGetAll()">채점 결과 조회</button></p>
+        <pre id="amaddaGradeGetAllResult" aria-live="polite"></pre>
+    </section>
+
+    <script>
+        async function amaddaGradeRequest(path, method, payload, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            const baseUrl = document.getElementById("amaddaGradeApiBaseUrl").value.trim().replace(/\/+$/, "");
+
+            if (!baseUrl) {
+                resultElement.textContent = "오류: FastAPI 기본 주소를 입력해 주세요.";
+                return null;
+            }
+
+            resultElement.textContent = "요청 중...";
+
+            try {
+                const response = await fetch(baseUrl + path, {
+                    method: method,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: payload === null ? undefined : JSON.stringify(payload)
+                });
+
+                const responseText = await response.text();
+                let responseData;
+
+                try {
+                    responseData = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    responseData = { raw_response: responseText };
+                }
+
+                resultElement.textContent =
+                    "HTTP 상태 코드: " + response.status + " " + response.statusText + "\n" +
+                    JSON.stringify(responseData, null, 2);
+
+                return { ok: response.ok, data: responseData };
+            } catch (error) {
+                resultElement.textContent =
+                    "요청 실패: " + error.message +
+                    "\nFastAPI 서버가 실행 중인지, 기본 주소가 맞는지, CORS 설정이 되어 있는지 확인해 주세요.";
+                return null;
+            }
+        }
+
+        function amaddaGradeGetCommonPayload(resultElementId) {
+            const user_id = document.getElementById("amaddaGradeUserId").value.trim();
+            const subject_id = document.getElementById("amaddaGradeSubjectId").value.trim();
+            const wiki_document_id = document.getElementById("amaddaGradeWikiDocumentId").value.trim();
+
+            if (!user_id || !subject_id || !wiki_document_id) {
+                document.getElementById(resultElementId).textContent =
+                    "사용자 ID, 과목 ID, Wiki 문서 ID를 모두 입력해 주세요.";
+                return null;
+            }
+
+            return { user_id, subject_id, wiki_document_id };
+        }
+
+        async function amaddaGradeStart() {
+            const payload = amaddaGradeGetCommonPayload("amaddaGradeStartResult");
+            if (!payload) return;
+
+            if (!confirm("이 Wiki 문서의 문제 채점을 시작하시겠습니까? 채점 결과가 저장됩니다.")) {
+                return;
+            }
+
+            await amaddaGradeRequest(
+                "/grades/grade", "POST", payload, "amaddaGradeStartResult"
+            );
+        }
+
+        async function amaddaGradeCheckProgress() {
+            const payload = amaddaGradeGetCommonPayload("amaddaGradeProgressResult");
+            if (!payload) return;
+
+            await amaddaGradeRequest(
+                "/grades/is-grading", "POST", payload, "amaddaGradeProgressResult"
+            );
+        }
+
+        async function amaddaGradeGetAll() {
+            const payload = amaddaGradeGetCommonPayload("amaddaGradeGetAllResult");
+            if (!payload) return;
+
+            await amaddaGradeRequest(
+                "/grades/get-all", "POST", payload, "amaddaGradeGetAllResult"
+            );
+        }
+    </script>
+</body>
+</html>

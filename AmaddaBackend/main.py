@@ -40,6 +40,7 @@ from AmaddaBackend.amadda_element_manager import AmaddaElementManager
 from AmaddaBackend.firebase_signup_and_login import FirebaseSignUpAndLogin
 from AmaddaBackend.lecture_material_text_extracter import LectureMaterialTextExtracter
 from AmaddaBackend.problem_generator import ProblemGenerator
+from AmaddaBackend.problem_grader import ProblemGrader
 
 from AmaddaBackend.amadda_user_account_controller import AmaddaUserAccountController
 
@@ -47,7 +48,7 @@ from AmaddaBackend.amadda_subject_controller import AmaddaSubjectController
 from AmaddaBackend.amadda_llmwiki_controller import AmaddaLLMWikiController
 from AmaddaBackend.amadda_problem_controller import AmaddaProblemController
 
-# from AmaddaBackend.amadda_grade_controller import GradeController
+from AmaddaBackend.amadda_grade_controller import AmaddaGradeController
 
 # env load
 import os
@@ -72,6 +73,7 @@ firebase_signup_and_login = FirebaseSignUpAndLogin(
 )
 lecture_material_text_extracter = LectureMaterialTextExtracter()
 problem_generator = ProblemGenerator(GEMINI_API_KEY)
+problem_grader = ProblemGrader(GEMINI_API_KEY)
 
 amadda_user_account_controller = AmaddaUserAccountController(
     firebase_signup_and_login=firebase_signup_and_login,
@@ -84,7 +86,9 @@ amadda_llm_wiki_controller = AmaddaLLMWikiController(
 amadda_problem_controller = AmaddaProblemController(
     amadda_element_manager, problem_generator
 )
-# amadda_grade_controller = AmaddaGradeController()
+amadda_grade_controller = AmaddaGradeController(
+    amadda_element_manager, problem_grader
+)
 
 # =========================================================
 ## AmaddaUserAccountController
@@ -660,13 +664,83 @@ async def delete_problem(request: DeleteProblemRequest):
 ## AmaddaGradeController
 # =========================================================
 
+# 1. 문제 채점
+class GradeProblemRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    wiki_document_id: str
+
+
+@app.post("/grades/grade")
+async def grade_problem(request: GradeProblemRequest):
+    try:
+        await amadda_grade_controller.grade_problem(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            wiki_document_id=request.wiki_document_id,
+        )
+
+        return success_response("문제 채점이 완료되었습니다.")
+
+    except Exception as error:
+        return error_response(error)
+
+
+# 2. 문제 채점 진행 상태 확인
+class IsProblemGradingRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    wiki_document_id: str
+
+
+@app.post("/grades/is-grading")
+async def is_problem_grading(request: IsProblemGradingRequest):
+    try:
+        is_grading = amadda_grade_controller.is_problem_grading(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            wiki_document_id=request.wiki_document_id,
+        )
+
+        return success_response(
+            "문제 채점 상태를 조회했습니다.",
+            data={"is_grading": is_grading},
+        )
+
+    except Exception as error:
+        return error_response(error)
+
+
+# 3. 전체 채점 결과 조회
+class GetAllGradesRequest(BaseModel):
+    user_id: str
+    subject_id: str
+    wiki_document_id: str
+
+
+@app.post("/grades/get-all")
+async def get_all_grades(request: GetAllGradesRequest):
+    try:
+        grades = await amadda_grade_controller.get_all_grades(
+            user_id=request.user_id,
+            subject_id=request.subject_id,
+            wiki_document_id=request.wiki_document_id,
+        )
+
+        return success_response(
+            "전체 채점 결과 조회가 완료되었습니다.",
+            data={"grades": grades},
+        )
+
+    except Exception as error:
+        return error_response(error)
 
 # =========================================================
-# 서버 실행
+# 서버 실행 uvicorn AmaddaBackend.main:app --reload
 # =========================================================
 @app.get("/")
 async def index():
-    way = 1
+    way = 5
     
     if(way == 1):
         return FileResponse("./AmaddaFrontend/AmaddaUserAccountController.html")
@@ -676,3 +750,5 @@ async def index():
         return FileResponse("./AmaddaFrontend/AmaddaLLMWikiController.html")
     elif(way == 4):
         return FileResponse("./AmaddaFrontend/AmaddaProblemController.html")
+    elif(way == 5):
+        return FileResponse("./AmaddaFrontend/AmaddaGradeController.html")
