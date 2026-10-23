@@ -117,6 +117,11 @@ class AmaddaProblemController:
     async def update_user_answer(self, user_id:str, subject_id:str, user_answer_id:str, new_datas:dict[str, Any]) -> None:
         '''
         사용자 풀이 데이터를 갱신하는 기능
+        new_datas의 구조는 아래와 같음
+        {
+            "user_answer":str
+            "user_answer_state":str # "answered", "not_answered"중 하나
+        }
         '''
         await self.__amadda_element_manager.update_user_answer(user_id, subject_id, user_answer_id, new_datas)
 
