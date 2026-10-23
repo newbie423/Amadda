@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from AmaddaBackend.amadda_element_manager import AmaddaElementManager
@@ -18,57 +19,91 @@ class AmaddaGradeController:
         }
         '''
 
-    async def grade_problem(self, user_id:str, subject_id:str, wiki_document_id:str):
+    async def grade_problem(self, user_id: str, subject_id: str, wiki_document_id: str):
+        """
+        임의의 위키 문서 속 모든 문제들을 채점하는 기능
+        """
+
         key = (user_id, subject_id, wiki_document_id)
-        
-        if(key not in self.__problem_grade_process):
-            self.__problem_grade_process[key] = True # 채점을 시작할 것이니 True
-        
-        # 문제의 질문과 정답 그리고 해당 문제에 대한 사용자의 답변을 가져와 채점을 수행할 수 있는 형태로 변환하기
-        problems = await self.__amadda_element_manager.get_wiki_document_problems(user_id, subject_id, wiki_document_id)
 
-        results_for_grading:list[dict[str, Any]] = []
+        if self.is_problem_grading(user_id, subject_id, wiki_document_id):
+            raise ValueError(
+                "채점이 이미 진행중입니다. 채점이 완료된 이후 다시 시도해 주세요."
+            )
 
-        for problem in problems:
-            user_answer = await self.__amadda_element_manager.get_user_answer(user_id,
-                                                                              subject_id,
-                                                                              problem["owned_user_answer_id"])
-            results_for_grading += [{
-                "id":problem["problem_id"], # 이곳에 problem_id를 사용
-                "problem_question":problem["problem_question"],
-                "problem_correct_answer":problem["problem_correct_answer"],
-                "user_answer":user_answer["user_answer"]
-            }]
+        # 채점 시작 상태를 먼저 설정
+        # 동시에 요청되는 중복 채점 방지
+        self.__problem_grade_process[key] = True
 
-        # 실제 채점 수행
-        grade_results:list[dict[str, Any]] = None
-        
         try:
-            grade_results = self.__problem_grader.grade(results_for_grading)
-        except:
-            self.__problem_grade_process[key] = False # 채점에 실패하였으니 채점중이 아니기에 False
-            raise
+            # 문제 정보 가져오기
+            problems = await self.__amadda_element_manager.get_wiki_document_problems(
+                user_id,
+                subject_id,
+                wiki_document_id
+            )
 
-        # 채점 결과를 인덱싱
-        indexed_grade_results = {}
-        
-        for grade_result in grade_results:
-            indexed_grade_results[grade_result["id"]] = grade_result
-        
-        # 채점 결과를 토대로 데이터 베이스속 적절한 실제 채점 데이터의 요소를 갱신
-        # 모든 문제마다 소유하고 있는 채점 데이터의 아이디를 가져와 해당 채점 데이터를 갱신
-        for problem in problems:
-            id = problem["problem_id"]
-            grade_id = problem["owned_grade_id"]
+            # 가져온 문제들중 정답은 제외하기(incorrect 또는 not_graded만 찾기)
+            not_correct_problems = []
+            
+            for problem in problems:
+                grade_id = problem["owned_grade_id"]
+                grade = await self.__amadda_element_manager.get_grade(user_id, subject_id, grade_id)
+                if(grade["grade_state"] != "correct"):
+                    not_correct_problems += [problem]
 
-            grade_result = indexed_grade_results[id]
-            grade_update_result = {
-                "grade_state":grade_result["grade_state"],
-                "explanation":grade_result["explanation"]
+            problems = not_correct_problems # 변수명 그대로 사용하기
+
+            results_for_grading: list[dict[str, Any]] = []
+
+            for problem in problems:
+                user_answer = await self.__amadda_element_manager.get_user_answer(
+                    user_id,
+                    subject_id,
+                    problem["owned_user_answer_id"]
+                )
+
+                results_for_grading.append({
+                    "id": problem["problem_id"],
+                    "problem_question": problem["problem_question"],
+                    "problem_correct_answer": problem["problem_correct_answer"],
+                    "user_answer": user_answer["user_answer"]
+                })
+
+            # 동기 함수를 별도의 스레드에서 실행
+            grade_results: list[dict[str, Any]] = await asyncio.to_thread(
+                self.__problem_grader.grade,
+                results_for_grading
+            )
+
+            # 채점 결과 인덱싱
+            indexed_grade_results = {
+                grade_result["id"]: grade_result
+                for grade_result in grade_results
             }
-            await self.__amadda_element_manager.update_grade(user_id, subject_id, grade_id, grade_update_result)
-        
-        self.__problem_grade_process[key] = False # 채점 완료 되었으니 False
+
+            # 채점 결과를 데이터베이스에 반영
+            for problem in problems:
+                problem_id = problem["problem_id"]
+                grade_id = problem["owned_grade_id"]
+
+                grade_result = indexed_grade_results[problem_id]
+
+                grade_update_result = {
+                    "grade_state": grade_result["grade_state"],
+                    "explanation": grade_result["explanation"]
+                }
+
+                await self.__amadda_element_manager.update_grade(
+                    user_id,
+                    subject_id,
+                    grade_id,
+                    grade_update_result
+                )
+
+        finally:
+            # 성공, 예외 발생, 취소 등 종료 경로에서 상태 정리
+            self.__problem_grade_process[key] = False
 
     def is_problem_grading(self, user_id:str, subject_id:str, wiki_document_id:str)->bool:
         '''
@@ -82,7 +117,4 @@ class AmaddaGradeController:
         임이의 위키 문서를 기반으로 생성된 모든 문제에 대한 채점 데이터를 반환하는 기능
         '''
         return await self.__amadda_element_manager.get_wiki_document_grades(user_id, subject_id, wiki_document_id)
-
-
-
 

@@ -6,6 +6,9 @@ class ProblemGrader:
     def __init__(self, gemini_api_key:str):
         self.__gemini_api_key = gemini_api_key
 
+    def __generate_prompt(self)->str:
+        pass
+
     def grade(self, grade_infos:list[dict[str, Any]])->list[dict[str, Any]]:
         '''
         채점을 수행하는 기능
@@ -27,11 +30,13 @@ class ProblemGrader:
 
         result = []
 
-        for grade_info in grade_infos:
+        for idx in range(len(grade_infos)):
+            grade_info = grade_infos[idx]
+            
             result += [{
                 "id":grade_info["id"],
-                "grade_state":"incorrect",
-                "explanation":"틀렸습니다"
+                "grade_state":"not_graded",
+                "explanation":""
             }]
 
         return result
