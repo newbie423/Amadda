@@ -2,12 +2,28 @@ from typing import Any
 import logging
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 
 # 객체 생성 및 공통 설정
 
 app = FastAPI(title="Amadda User Account API")
+
+# 1. 허용할 프론트엔드 도메인(Origin) 목록 설정
+origins = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://mae-neung.github.io",  # 🌟 GitHub Pages 도메인 추가 (경로는 제외)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       # 등록된 프론트엔드 주소 허용
+    allow_credentials=True,      # 로그인 세션/쿠키 사용 시 필수
+    allow_methods=["*"],         # OPTIONS, POST 등 모든 메서드 허용
+    allow_headers=["*"],         # Content-Type 등 모든 헤더 허용
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +134,6 @@ async def user_signup(request: SignupRequest):
 
 
 # 1. 로그인
-
 
 class LoginRequest(BaseModel):
     email: str
@@ -740,7 +755,7 @@ async def get_all_grades(request: GetAllGradesRequest):
 # =========================================================
 @app.get("/")
 async def index():
-    way = 5
+    way = 1
     
     if(way == 1):
         return FileResponse("./AmaddaFrontend/AmaddaUserAccountController.html")
