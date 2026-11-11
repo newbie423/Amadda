@@ -19,10 +19,10 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       # 등록된 프론트엔드 주소 허용
-    allow_credentials=True,      # 로그인 세션/쿠키 사용 시 필수
-    allow_methods=["*"],         # OPTIONS, POST 등 모든 메서드 허용
-    allow_headers=["*"],         # Content-Type 등 모든 헤더 허용
+    allow_origins=origins,  # 등록된 프론트엔드 주소 허용
+    allow_credentials=True,  # 로그인 세션/쿠키 사용 시 필수
+    allow_methods=["*"],  # OPTIONS, POST 등 모든 메서드 허용
+    allow_headers=["*"],  # Content-Type 등 모든 헤더 허용
 )
 
 logger = logging.getLogger(__name__)
@@ -102,9 +102,7 @@ amadda_llm_wiki_controller = AmaddaLLMWikiController(
 amadda_problem_controller = AmaddaProblemController(
     amadda_element_manager, problem_generator
 )
-amadda_grade_controller = AmaddaGradeController(
-    amadda_element_manager, problem_grader
-)
+amadda_grade_controller = AmaddaGradeController(amadda_element_manager, problem_grader)
 
 # =========================================================
 ## AmaddaUserAccountController
@@ -134,6 +132,7 @@ async def user_signup(request: SignupRequest):
 
 
 # 1. 로그인
+
 
 class LoginRequest(BaseModel):
     email: str
@@ -679,6 +678,7 @@ async def delete_problem(request: DeleteProblemRequest):
 ## AmaddaGradeController
 # =========================================================
 
+
 # 1. 문제 채점
 class GradeProblemRequest(BaseModel):
     user_id: str
@@ -750,20 +750,21 @@ async def get_all_grades(request: GetAllGradesRequest):
     except Exception as error:
         return error_response(error)
 
+
 # =========================================================
 # 서버 실행 uvicorn AmaddaBackend.main:app --reload
 # =========================================================
 @app.get("/")
 async def index():
     way = 1
-    
-    if(way == 1):
+
+    if way == 1:
         return FileResponse("./AmaddaFrontend/AmaddaUserAccountController.html")
-    elif(way == 2):
+    elif way == 2:
         return FileResponse("./AmaddaFrontend/AmaddaSubjectController.html")
-    elif(way == 3):
+    elif way == 3:
         return FileResponse("./AmaddaFrontend/AmaddaLLMWikiController.html")
-    elif(way == 4):
+    elif way == 4:
         return FileResponse("./AmaddaFrontend/AmaddaProblemController.html")
-    elif(way == 5):
+    elif way == 5:
         return FileResponse("./AmaddaFrontend/AmaddaGradeController.html")
